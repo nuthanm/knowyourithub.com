@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CATEGORY_COUNTS,
@@ -33,7 +33,22 @@ export function CompanyDirectory() {
   const [view, setView] = useState<ViewMode>("list");
 
   const locations = useMemo(() => getCompanyLocations(VERIFIED_COMPANIES), []);
-  const domains = useMemo(() => getCompanyDomains(VERIFIED_COMPANIES), []);
+  const domainSourceCompanies = useMemo(
+    () =>
+      filterCompanies(VERIFIED_COMPANIES, {
+        category,
+        location: location === "all" ? undefined : location,
+      }),
+    [category, location],
+  );
+
+  const domains = useMemo(() => getCompanyDomains(domainSourceCompanies), [domainSourceCompanies]);
+
+  useEffect(() => {
+    if (domain === "all") return;
+    const stillAvailable = domains.some((item) => item.value === domain);
+    if (!stillAvailable) setDomain("all");
+  }, [domains, domain]);
 
   const results = useMemo(() => {
     const filters = {
