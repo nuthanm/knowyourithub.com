@@ -3,7 +3,8 @@ import { CompanyDirectory } from "@/features/companies/company-directory";
 
 export const metadata = {
   title: "Companies — Know Your IT Hub",
-  description: "Browse verified product-based and service-based companies. Filter by name and location.",
+  description:
+    "Browse verified product-based and service-based companies. Filter by location, type, and industry.",
 };
 
 export default function CompaniesPage() {
@@ -12,7 +13,8 @@ export default function CompaniesPage() {
       <div className="companies-page-header">
         <h1 className="page-title">Companies</h1>
         <p className="page-lead">
-          Verified profiles only — sorted A–Z. Filter by location or type, and switch list/tile view.
+          Verified profiles only — sorted A–Z. Filter by location, type, or industry, and switch list/tile
+          view.
         </p>
       </div>
       <CompanyDirectory />

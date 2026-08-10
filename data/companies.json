@@ -3514,7 +3514,7 @@
           "label": "About page"
         },
         {
-          "url": "https://careers.myntra.com/",
+          "url": "https://www.myntra.com/careers",
           "label": "Careers"
         },
         {
@@ -3531,7 +3531,7 @@
       "website": "https://www.myntra.com",
       "category": "hybrid",
       "linkedin": "https://www.linkedin.com/company/myntra",
-      "careersUrl": "https://careers.myntra.com/",
+      "careersUrl": "https://www.myntra.com/careers",
       "contactUrl": "https://www.myntra.com/aboutus",
       "leadership": [
         {
@@ -9335,73 +9335,6 @@
       "headcountGlobal": "390,000+",
       "officeCountries": [
         "United States"
-      ],
-      "verificationStatus": "verified"
-    },
-    {
-      "hq": "Tokyo, Japan",
-      "name": "Mizuho",
-      "slug": "mizuho",
-      "tags": [
-        "MNC",
-        "Public company"
-      ],
-      "domains": [
-        "Banking",
-        "Capital markets",
-        "Asset management"
-      ],
-      "founded": "2003",
-      "sources": [
-        {
-          "url": "https://www.mizuhogroup.com",
-          "label": "Homepage"
-        },
-        {
-          "url": "https://www.mizuhogroup.com/who-we-are/company-information-home",
-          "label": "Company overview"
-        },
-        {
-          "url": "https://www.mizuhogroup.com/who-we-are/governance-home",
-          "label": "Governance"
-        },
-        {
-          "url": "https://www.mizuhogroup.com/careers",
-          "label": "Careers"
-        }
-      ],
-      "tagline": "Global financial group spanning banking, trust, and securities",
-      "website": "https://www.mizuhogroup.com",
-      "category": "hybrid",
-      "linkedin": "https://www.linkedin.com/company/mizuho",
-      "products": [
-        "Corporate and institutional banking",
-        "Retail banking",
-        "Trust banking",
-        "Securities services"
-      ],
-      "services": [
-        "Lending and deposits",
-        "Advisory and capital markets",
-        "Transaction banking"
-      ],
-      "careersUrl": "https://www.mizuhogroup.com/careers",
-      "contactUrl": "https://www.mizuhogroup.com/locations",
-      "leadership": [
-        {
-          "name": "Masahiro Kihara",
-          "role": "President & Group CEO"
-        }
-      ],
-      "description": "Mizuho is a global financial group offering banking, trust, securities, and asset management services to individuals, corporations, financial institutions, and public-sector clients.",
-      "lastVerified": "2026-08-07",
-      "onsitePolicy": "Hybrid - verify on careers page",
-      "officeCountries": [
-        "Japan",
-        "United States",
-        "United Kingdom",
-        "Singapore",
-        "Hong Kong"
       ],
       "verificationStatus": "verified"
     },

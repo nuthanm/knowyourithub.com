@@ -9,7 +9,7 @@ import {
   VERIFIED_COMPANIES,
   type CompanyCategory,
 } from "@/lib/companies";
-import { filterCompanies, getCompanyLocations } from "@/lib/company-search";
+import { filterCompanies, getCompanyDomains, getCompanyLocations } from "@/lib/company-search";
 import { CompanyListRowFromEntry, CompanyTileFromEntry } from "@/components/CompanyCard";
 import { AlphabetIndex, groupCompaniesByLetter } from "@/components/AlphabetIndex";
 import { AdSlot } from "@/components/AdSense";
@@ -29,14 +29,17 @@ const hasPipeline =
 export function CompanyDirectory() {
   const [location, setLocation] = useState("all");
   const [category, setCategory] = useState<CompanyCategory | "all">("all");
+  const [domain, setDomain] = useState("all");
   const [view, setView] = useState<ViewMode>("list");
 
   const locations = useMemo(() => getCompanyLocations(VERIFIED_COMPANIES), []);
+  const domains = useMemo(() => getCompanyDomains(VERIFIED_COMPANIES), []);
 
   const results = useMemo(() => {
     const filters = {
       location: location === "all" ? undefined : location,
       category,
+      domain,
     };
 
     return filterCompanies(VERIFIED_COMPANIES, filters).map((company) => ({
@@ -50,7 +53,10 @@ export function CompanyDirectory() {
       tags: company.tags,
       profile: company,
     }));
-  }, [location, category]);
+  }, [location, category, domain]);
+
+  const selectedDomainLabel =
+    domain === "all" ? undefined : domains.find((item) => item.value === domain)?.label;
 
   const grouped = useMemo(() => groupCompaniesByLetter(results), [results]);
 
@@ -108,6 +114,21 @@ export function CompanyDirectory() {
                   ))}
                 </select>
               </label>
+              <label className="filter-select-wrap">
+                <span className="filter-select-label">Industry</span>
+                <select
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  aria-label="Filter by company industry"
+                >
+                  <option value="all">All industries</option>
+                  {domains.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.preferred ? `Popular · ${item.label}` : item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div className="view-toggle" role="group" aria-label="View mode">
               <button
@@ -133,6 +154,7 @@ export function CompanyDirectory() {
           Showing <strong>{results.length}</strong> of {CATEGORY_COUNTS.total} verified companies
           {category !== "all" && <> · {CATEGORY_LABELS[category]}</>}
           {location !== "all" && <> · {location}</>}
+          {selectedDomainLabel && <> · {selectedDomainLabel}</>}
         </p>
       </div>
 

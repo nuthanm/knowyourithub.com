@@ -3169,7 +3169,7 @@ a.pipeline-stat-link:hover {
   }
 
   .companies-toolbar-controls {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: end;
     gap: 0.4rem;
   }
@@ -3177,18 +3177,22 @@ a.pipeline-stat-link:hover {
   .companies-toolbar-filters {
     flex: 1;
     min-width: 0;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0.4rem;
   }
 
   .filter-select-wrap {
-    min-width: 0;
-    flex: 1 1 0;
+    min-width: 7.5rem;
+    flex: 1 1 calc(50% - 0.4rem);
   }
 
   .filter-select-wrap select {
     padding: 0.45rem 0.4rem;
     font-size: 12px;
+  }
+
+  .view-toggle {
+    margin-left: auto;
   }
 
   .view-toggle button {

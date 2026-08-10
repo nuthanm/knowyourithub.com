@@ -10,8 +10,28 @@ export type CompanySearchFilters = {
   query?: string;
   location?: string;
   category?: CompanyCategory | "all";
+  domain?: string;
   status?: VerificationStatus | "all" | "pipeline";
 };
+
+const PREFERRED_DOMAIN_ORDER = [
+  "IT Services",
+  "SaaS",
+  "Fintech",
+  "Insurance",
+  "Healthcare",
+  "E-commerce",
+  "Cloud",
+  "AI/ML",
+  "Consulting",
+  "Chemicals",
+  "Manufacturing",
+  "Banking",
+] as const;
+
+const PREFERRED_DOMAIN_INDEX = new Map<string, number>(
+  PREFERRED_DOMAIN_ORDER.map((label, index) => [label.toLowerCase(), index]),
+);
 
 /** Unified row for directory search — verified profiles and pipeline queue items */
 export type CompanySearchEntry = {
@@ -85,6 +105,40 @@ export function getCompanyLocations(companies: CompanyProfile[]) {
   return deduped.sort((a, b) => a.localeCompare(b));
 }
 
+/** Unique domain labels for industry-style filtering (e.g. IT Services, Insurance). */
+export function getCompanyDomains(companies: CompanyProfile[]) {
+  const map = new Map<string, string>();
+
+  for (const company of companies) {
+    for (const domain of company.domains ?? []) {
+      const trimmed = domain.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (!map.has(key)) map.set(key, trimmed);
+    }
+  }
+
+  return Array.from(map.entries())
+    .sort((a, b) => {
+      const aPreferred = PREFERRED_DOMAIN_INDEX.get(a[0]);
+      const bPreferred = PREFERRED_DOMAIN_INDEX.get(b[0]);
+
+      if (aPreferred !== undefined && bPreferred !== undefined) {
+        return aPreferred - bPreferred;
+      }
+
+      if (aPreferred !== undefined) return -1;
+      if (bPreferred !== undefined) return 1;
+
+      return a[1].localeCompare(b[1]);
+    })
+    .map(([value, label]) => ({
+      value,
+      label,
+      preferred: PREFERRED_DOMAIN_INDEX.has(value),
+    }));
+}
+
 /** Match company identity fields only — not HQ/tags/description (avoids “Del” → Delhi). */
 function companyMatchesQuery(
   query: string,
@@ -120,11 +174,17 @@ export function filterCompanies(companies: CompanyProfile[], filters: CompanySea
   const q = filters.query?.trim() ?? "";
   const loc = filters.location?.trim().toLowerCase() ?? "";
   const category = filters.category ?? "all";
+  const domain = filters.domain?.trim().toLowerCase() ?? "";
 
   const matched = companies.filter((c) => {
     if (category !== "all" && c.category !== category) return false;
 
     if (loc && loc !== "all" && !companyMatchesLocation(c, loc)) return false;
+
+    if (domain && domain !== "all") {
+      const hasDomain = (c.domains ?? []).some((d) => d.trim().toLowerCase() === domain);
+      if (!hasDomain) return false;
+    }
 
     return companyMatchesQuery(q, { name: c.name, slug: c.slug, domains: c.domains });
   });
@@ -144,6 +204,7 @@ export function filterCompanyEntries(entries: CompanySearchEntry[], filters: Com
   const q = filters.query?.trim() ?? "";
   const loc = filters.location?.trim().toLowerCase() ?? "";
   const category = filters.category ?? "all";
+  const domain = filters.domain?.trim().toLowerCase() ?? "";
   const status = filters.status ?? "all";
 
   const matched = entries.filter((entry) => {
@@ -157,6 +218,13 @@ export function filterCompanyEntries(entries: CompanySearchEntry[], filters: Com
     }
 
     if (category !== "all" && entry.category !== category) return false;
+
+    if (domain && domain !== "all") {
+      const hasDomain = (entry.profile?.domains ?? entry.domains ?? []).some(
+        (d) => d.trim().toLowerCase() === domain,
+      );
+      if (!hasDomain) return false;
+    }
 
     if (loc && loc !== "all") {
       const matchesHq = (entry.hq ?? "").toLowerCase().includes(loc);
