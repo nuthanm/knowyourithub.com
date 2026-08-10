@@ -40505,8 +40505,71 @@
         "United States"
       ],
       "verificationStatus": "verified"
+    },
+    {
+      "hq": "Tokyo, Japan",
+      "name": "Mizuho Financial Group",
+      "slug": "mizuho",
+      "tags": [
+        "MNC",
+        "Public company",
+        "Financial services"
+      ],
+      "domains": [
+        "Banking",
+        "Capital markets",
+        "Asset management"
+      ],
+      "founded": "2003",
+      "sources": [
+        {
+          "url": "https://www.mizuhogroup.com/company/outline",
+          "label": "Company outline"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/company/executives",
+          "label": "Leadership"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/investors",
+          "label": "Investor relations"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/careers",
+          "label": "Careers"
+        }
+      ],
+      "tagline": "Global financial group with banking, trust, and securities services",
+      "website": "https://www.mizuhogroup.com",
+      "category": "service",
+      "linkedin": "https://www.linkedin.com/company/mizuho",
+      "services": [
+        "Corporate and retail banking",
+        "Trust banking",
+        "Investment and securities services",
+        "Asset management"
+      ],
+      "careersUrl": "https://www.mizuhogroup.com/careers",
+      "contactUrl": "https://www.mizuhogroup.com/contact",
+      "leadership": [
+        {
+          "name": "Masahiro Kihara",
+          "role": "President & Group CEO"
+        }
+      ],
+      "description": "Mizuho Financial Group is a Japan-based global financial institution group providing banking, trust, securities, and asset management services to retail, corporate, and institutional customers.",
+      "lastVerified": "2026-08-10",
+      "onsitePolicy": "Hybrid and role-dependent; verify on careers pages",
+      "officeCountries": [
+        "Japan",
+        "United States",
+        "United Kingdom",
+        "Singapore",
+        "India"
+      ],
+      "verificationStatus": "in_progress"
     }
   ],
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
-  "catalogUpdated": "2026-08-07"
+  "catalogUpdated": "2026-08-10"
 }

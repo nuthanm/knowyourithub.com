@@ -3073,6 +3073,41 @@ a.pipeline-stat-link:hover {
   font-family: inherit;
 }
 
+.companies-toolbar-search-field {
+  position: relative;
+}
+
+.companies-toolbar-search-field input {
+  padding-right: 2.1rem;
+}
+
+.companies-toolbar-search-clear {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 14px;
+  font-weight: 900;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.companies-toolbar-search-clear:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--cream-2) 80%, transparent);
+}
+
+.companies-toolbar-search-clear:focus-visible {
+  outline: 2px solid var(--profit);
+  outline-offset: 1px;
+}
+
 .companies-toolbar-search input:focus {
   outline: none;
   border-color: var(--profit);
@@ -3188,6 +3223,17 @@ a.pipeline-stat-link:hover {
 
   .filter-select-wrap select {
     padding: 0.45rem 0.4rem;
+    font-size: 12px;
+  }
+
+  .companies-toolbar-search input {
+    padding-right: 1.95rem;
+  }
+
+  .companies-toolbar-search-clear {
+    right: 0.32rem;
+    width: 1.25rem;
+    height: 1.25rem;
     font-size: 12px;
   }
 

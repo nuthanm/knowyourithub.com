@@ -27,6 +27,7 @@ const hasPipeline =
   CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified > 0;
 
 export function CompanyDirectory() {
+  const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [category, setCategory] = useState<CompanyCategory | "all">("all");
   const [domain, setDomain] = useState("all");
@@ -54,8 +55,13 @@ export function CompanyDirectory() {
     setDomain("all");
   };
 
+  const clearQuery = () => {
+    setQuery("");
+  };
+
   const results = useMemo(() => {
     const filters = {
+      query,
       location: location === "all" ? undefined : location,
       category,
       domain,
@@ -72,10 +78,11 @@ export function CompanyDirectory() {
       tags: company.tags,
       profile: company,
     }));
-  }, [location, category, domain]);
+  }, [query, location, category, domain]);
 
   const selectedDomainLabel =
     domain === "all" ? undefined : domains.find((item) => item.value === domain)?.label;
+  const hasQuery = query.trim().length > 0;
 
   const grouped = useMemo(() => groupCompaniesByLetter(results), [results]);
 
@@ -104,6 +111,31 @@ export function CompanyDirectory() {
           )}
           <div className="companies-toolbar-controls">
             <div className="companies-toolbar-filters">
+              <label className="filter-select-wrap companies-toolbar-search">
+                <span className="filter-select-label">Search</span>
+                <div className="companies-toolbar-search-field">
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") clearQuery();
+                    }}
+                    placeholder="Search company name or website"
+                    aria-label="Search companies"
+                  />
+                  {hasQuery && (
+                    <button
+                      type="button"
+                      className="companies-toolbar-search-clear"
+                      onClick={clearQuery}
+                      aria-label="Clear search"
+                    >
+                      x
+                    </button>
+                  )}
+                </div>
+              </label>
               <label className="filter-select-wrap">
                 <span className="filter-select-label">Location</span>
                 <select
@@ -171,6 +203,7 @@ export function CompanyDirectory() {
         </div>
         <p className="companies-results-bar">
           Showing <strong>{results.length}</strong> of {CATEGORY_COUNTS.total} verified companies
+          {hasQuery && <> · Search: {query.trim()}</>}
           {category !== "all" && <> · {CATEGORY_LABELS[category]}</>}
           {location !== "all" && <> · {location}</>}
           {selectedDomainLabel && <> · {selectedDomainLabel}</>}

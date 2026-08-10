@@ -6,9 +6,13 @@ import { loadScriptEnv } from "./load-env.mjs";
 await loadScriptEnv();
 
 const args = new Set(process.argv.slice(2));
+const fromBuild = args.has("--build");
 const required =
   args.has("--required") ||
   ["1", "true", "yes"].includes((process.env.CATALOG_DB_REQUIRED ?? "").trim().toLowerCase());
+const pullOnBuild = ["1", "true", "yes"].includes(
+  (process.env.CATALOG_PULL_ON_BUILD ?? "").trim().toLowerCase(),
+);
 
 const dbUrl = process.env.DATABASE_URL?.trim();
 const root = process.cwd();
@@ -17,6 +21,11 @@ const samplePath = resolve(root, "data", "companies.example.json");
 
 function isUsableDbUrl(url) {
   return Boolean(url && !url.includes("replace") && !url.includes("user:password"));
+}
+
+if (fromBuild && !pullOnBuild) {
+  console.log("Skipping DB catalog pull during build. Set CATALOG_PULL_ON_BUILD=true to enable.");
+  process.exit(0);
 }
 
 function assertCatalogShape(value) {

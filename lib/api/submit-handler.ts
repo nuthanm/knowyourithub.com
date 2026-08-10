@@ -3,7 +3,11 @@ import type { z, ZodType } from "zod";
 import { jsonResponse } from "@/lib/api/cors";
 import { buildSubscribeWelcomeEmail } from "@/lib/email-templates";
 import { saveSubscriber } from "@/lib/subscribers";
-import { buildAdminEmail, buildUserConfirmationEmail, saveSubmission } from "@/lib/submissions";
+import {
+  buildAdminEmail,
+  buildUserConfirmationEmail,
+  enqueueSubmissionFromMail,
+} from "@/lib/submissions";
 import { isBotLikeSubmission } from "@/lib/security/anti-bot";
 import { sendMail, isMailerConfigured } from "@/lib/security/mailer";
 import { checkRateLimitAsync, getRequestIp } from "@/lib/security/rate-limit";
@@ -143,7 +147,10 @@ export async function handleSubmissionPost(request: Request) {
     schema: submissionSchema,
     buildAdmin: buildAdminEmail,
     buildUser: buildUserConfirmationEmail,
-    save: saveSubmission,
+    save: async (input) => {
+      const result = await enqueueSubmissionFromMail(input);
+      return { stored: result.stored };
+    },
     requireStorage: false,
   });
 }

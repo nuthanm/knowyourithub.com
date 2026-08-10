@@ -146,12 +146,36 @@ export function PipelineQueue() {
   const [communityEntries, setCommunityEntries] = useState<CompanySearchEntry[]>([]);
   const [mailBannerCompany, setMailBannerCompany] = useState<string | null>(null);
   const moderatorToken = useMemo(() => searchParams.get("moderate")?.trim() ?? "", [searchParams]);
+  const [localModeratorToken, setLocalModeratorToken] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const stored = window.sessionStorage.getItem("queueModerationToken")?.trim() ?? "";
+    if (!stored) return "";
+    const exp = decodeModerationTokenExpiry(stored);
+    if (exp && Date.now() > exp) {
+      window.sessionStorage.removeItem("queueModerationToken");
+      return "";
+    }
+    return stored;
+  });
+  const [passcode, setPasscode] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const effectiveModeratorToken = moderatorToken || localModeratorToken;
   const moderatorTokenExp = useMemo(
-    () => (moderatorToken ? decodeModerationTokenExpiry(moderatorToken) : null),
-    [moderatorToken],
+    () =>
+      effectiveModeratorToken ? decodeModerationTokenExpiry(effectiveModeratorToken) : null,
+    [effectiveModeratorToken],
   );
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (moderatorToken) {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("queueModerationToken", moderatorToken);
+      }
+    }
+  }, [moderatorToken]);
 
   useEffect(() => {
     let active = true;
@@ -230,7 +254,7 @@ export function PipelineQueue() {
   }, [searchParams]);
 
   async function updateQueueStatus(entry: CompanySearchEntry, next: QueueStatusUpdate) {
-    if (!entry.submissionId || !moderatorToken || updatingId) return;
+    if (!entry.submissionId || !effectiveModeratorToken || updatingId) return;
     setUpdateError(null);
     setUpdatingId(entry.submissionId);
 
@@ -239,7 +263,7 @@ export function PipelineQueue() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-moderator-token": moderatorToken,
+          "x-moderator-token": effectiveModeratorToken,
         },
         body: JSON.stringify({
           id: entry.submissionId,
@@ -277,10 +301,45 @@ export function PipelineQueue() {
     }
   }
 
-  const allEntries = useMemo(
-    () => [...staticEntries, ...communityEntries].sort((a, b) => a.name.localeCompare(b.name)),
-    [staticEntries, communityEntries],
-  );
+  async function unlockModeration() {
+    if (!passcode.trim() || unlocking) return;
+    setUnlocking(true);
+    setUnlockError(null);
+
+    try {
+      const res = await fetch(`${getQueueApiUrl()}/moderate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode: passcode.trim() }),
+      });
+
+      const json = (await res.json()) as { ok?: boolean; error?: string; token?: string };
+      if (!res.ok || !json.ok || !json.token) {
+        setUnlockError(json.error || "Unable to unlock moderation mode.");
+        return;
+      }
+
+      setLocalModeratorToken(json.token);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem("queueModerationToken", json.token);
+      }
+      setPasscode("");
+    } catch {
+      setUnlockError("Unable to unlock moderation mode.");
+    } finally {
+      setUnlocking(false);
+    }
+  }
+
+  const allEntries = useMemo(() => {
+    const seen = new Set<string>();
+    const merged = [...communityEntries, ...staticEntries].filter((entry) => {
+      if (seen.has(entry.slug)) return false;
+      seen.add(entry.slug);
+      return true;
+    });
+    return merged.sort((a, b) => a.name.localeCompare(b.name));
+  }, [staticEntries, communityEntries]);
 
   const inProgressCount = allEntries.filter((entry) => entry.verificationStatus === "in_progress").length;
   const unverifiedCount = allEntries.filter((entry) => entry.verificationStatus === "unverified").length;
@@ -363,10 +422,45 @@ export function PipelineQueue() {
           )}{" "}
           Filter, browse, or click a row to see status and suggest official sources.
         </p>
-        {moderatorToken && (
+        {effectiveModeratorToken && (
           <p className="pipeline-results-bar" role="status" style={{ marginTop: 8 }}>
             Moderation mode active (secure email link)
             {moderatorTokenExp ? ` · token expires ${formatExpiry(moderatorTokenExp)}` : ""}
+          </p>
+        )}
+        {!effectiveModeratorToken && (
+          <div className="pipeline-toolbar" style={{ marginTop: 10 }}>
+            <label className="pipeline-search" style={{ maxWidth: 360 }}>
+              <span className="filter-select-label">Review passcode</span>
+              <input
+                type="password"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="Enter passcode to moderate"
+                aria-label="Review queue passcode"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void unlockModeration();
+                  }
+                }}
+              />
+            </label>
+            <div className="pipeline-toolbar-filters">
+              <button
+                type="button"
+                className="pipeline-page-btn"
+                onClick={() => void unlockModeration()}
+                disabled={unlocking || !passcode.trim()}
+              >
+                {unlocking ? "Unlocking…" : "Unlock moderation"}
+              </button>
+            </div>
+          </div>
+        )}
+        {unlockError && (
+          <p className="pipeline-results-bar" role="alert" style={{ marginTop: 8 }}>
+            {unlockError}
           </p>
         )}
         {updateError && (
@@ -508,7 +602,7 @@ export function PipelineQueue() {
                         ? "Details"
                         : "View"}
                     </Link>
-                    {moderatorToken && entry.communityRequest && entry.submissionId && (
+                    {effectiveModeratorToken && entry.communityRequest && entry.submissionId && (
                       <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                         <button
                           type="button"

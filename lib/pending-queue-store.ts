@@ -1,12 +1,49 @@
 import type { QueueSubmissionItem } from "@/lib/submissions-shared";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 
 const PENDING_QUEUE_KEY = "pending-queue:json";
+const LOCAL_PENDING_PATH = resolve(process.cwd(), "data", "pending.json");
 
 const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL?.trim();
 const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
 function hasUpstash() {
   return Boolean(UPSTASH_URL && UPSTASH_TOKEN);
+}
+
+function normalizeItems(input: unknown): QueueSubmissionItem[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((item): item is QueueSubmissionItem => Boolean(item && typeof item === "object"))
+    .map((item) => ({
+      ...item,
+      queueStatus: item.queueStatus ?? "awaiting_review",
+    }));
+}
+
+async function readLocalPendingQueueJson() {
+  try {
+    const raw = await readFile(LOCAL_PENDING_PATH, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) return normalizeItems(parsed);
+    if (parsed && typeof parsed === "object" && Array.isArray((parsed as { items?: unknown[] }).items)) {
+      return normalizeItems((parsed as { items: unknown[] }).items);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeLocalPendingQueueJson(items: QueueSubmissionItem[]) {
+  try {
+    await mkdir(dirname(LOCAL_PENDING_PATH), { recursive: true });
+    await writeFile(LOCAL_PENDING_PATH, `${JSON.stringify({ items }, null, 2)}\n`, "utf8");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function upstashCommand(command: unknown[]) {
@@ -30,32 +67,36 @@ async function upstashCommand(command: unknown[]) {
 }
 
 export function isPendingJsonConfigured() {
-  return hasUpstash();
+  return true;
 }
 
 export async function readPendingQueueJson(): Promise<QueueSubmissionItem[]> {
+  if (!hasUpstash()) {
+    return readLocalPendingQueueJson();
+  }
+
   const raw = await upstashCommand(["GET", PENDING_QUEUE_KEY]);
   if (typeof raw !== "string" || !raw) return [];
   try {
-    const parsed = JSON.parse(raw) as QueueSubmissionItem[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((item) => ({
-      ...item,
-      queueStatus: item?.queueStatus ?? "awaiting_review",
-    }));
+    const parsed = JSON.parse(raw) as unknown;
+    return normalizeItems(parsed);
   } catch {
     return [];
   }
 }
 
 export async function upsertPendingQueueJson(item: QueueSubmissionItem) {
-  if (!hasUpstash()) return { stored: false as const };
-
   const existing = await readPendingQueueJson();
   const next = [item, ...existing.filter((row) => row.slug !== item.slug && row.id !== item.id)].slice(
     0,
     200,
   );
+
+  if (!hasUpstash()) {
+    const stored = await writeLocalPendingQueueJson(next);
+    return { stored };
+  }
+
   const result = await upstashCommand(["SET", PENDING_QUEUE_KEY, JSON.stringify(next)]);
   return { stored: result === "OK" };
 }
@@ -65,8 +106,6 @@ export async function setPendingQueueJsonStatus(input: {
   slug?: string;
   queueStatus: QueueSubmissionItem["queueStatus"];
 }) {
-  if (!hasUpstash()) return { stored: false as const, changed: false as const };
-
   const id = input.id?.trim();
   const slug = input.slug?.trim();
   if (!id && !slug) return { stored: false as const, changed: false as const };
@@ -81,13 +120,17 @@ export async function setPendingQueueJsonStatus(input: {
   });
 
   if (!changed) return { stored: true as const, changed: false as const };
+
+  if (!hasUpstash()) {
+    const stored = await writeLocalPendingQueueJson(next);
+    return { stored, changed: true as const };
+  }
+
   const result = await upstashCommand(["SET", PENDING_QUEUE_KEY, JSON.stringify(next)]);
   return { stored: result === "OK", changed: true as const };
 }
 
 export async function removePendingQueueJsonEntries(input: { id?: string; slug?: string }) {
-  if (!hasUpstash()) return { stored: false as const, removed: 0 };
-
   const id = input.id?.trim();
   const slug = input.slug?.trim();
   if (!id && !slug) return { stored: false as const, removed: 0 };
@@ -101,6 +144,11 @@ export async function removePendingQueueJsonEntries(input: { id?: string; slug?:
 
   const removed = existing.length - next.length;
   if (removed <= 0) return { stored: true as const, removed: 0 };
+
+  if (!hasUpstash()) {
+    const stored = await writeLocalPendingQueueJson(next);
+    return { stored, removed };
+  }
 
   const result = await upstashCommand(["SET", PENDING_QUEUE_KEY, JSON.stringify(next)]);
   return { stored: result === "OK", removed };

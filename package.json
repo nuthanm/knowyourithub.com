@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/catalog-pull-db.mjs",
+    "prebuild": "node scripts/catalog-pull-db.mjs --build",
     "build": "next build",
     "enrich:wikidata": "node scripts/enrich-wikidata.mjs",
     "catalog:push-db": "node scripts/catalog-push-db.mjs",

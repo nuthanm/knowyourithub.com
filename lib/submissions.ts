@@ -1,7 +1,6 @@
 import postgres from "postgres";
 import {
   ALL_COMPANY_SLUGS,
-  COMPANIES,
   PIPELINE_IN_PROGRESS,
   PIPELINE_UNVERIFIED,
   slugifyCompanyName,
@@ -84,7 +83,9 @@ function getCompanyAliasKeys(name: string, slug: string, website?: string) {
 
 const VERIFIED_SLUGS = new Set(VERIFIED_COMPANIES.map((company) => company.slug));
 const CATALOG_COMPANY_KEYS = new Set(
-  COMPANIES.flatMap((company) => [...getCompanyAliasKeys(company.name, company.slug, company.website)]),
+  VERIFIED_COMPANIES.flatMap((company) =>
+    [...getCompanyAliasKeys(company.name, company.slug, company.website)]
+  ),
 );
 
 const ACTIVE_QUEUE_STATUSES: SubmissionQueueStatus[] = ["awaiting_review", "in_progress"];
@@ -284,7 +285,66 @@ export async function updateSubmissionQueueStatus(input: {
   companySlug?: string;
 }) {
   const db = getSql();
-  if (!db) return { updated: false as const, reason: "db-not-configured" as const };
+  if (!db) {
+    const { readPendingQueueJson, removePendingQueueJsonEntries, setPendingQueueJsonStatus } = await import(
+      "@/lib/pending-queue-store"
+    );
+
+    const items = await readPendingQueueJson();
+    const found = items.find(
+      (item) => item.id === input.id || (!!input.companySlug && item.slug === input.companySlug),
+    );
+
+    if (!found) return { updated: false as const, reason: "not-found" as const };
+
+    const previousStatus = found.queueStatus ?? "awaiting_review";
+    const changed = previousStatus !== input.status;
+
+    if (input.status === "verified" || input.status === "rejected") {
+      await removePendingQueueJsonEntries({ id: found.id, slug: found.slug });
+    } else {
+      await setPendingQueueJsonStatus({
+        id: found.id,
+        slug: found.slug,
+        queueStatus: input.status,
+      });
+    }
+
+    const { removeCatalogDraftBySlug, upsertInProgressCatalogDraft } = await import(
+      "@/lib/catalog-drafts"
+    );
+    const effectiveSlug = input.companySlug?.trim() || found.slug;
+    const effectiveName = input.companyName?.trim() || found.name;
+    const effectiveWebsite = found.website;
+
+    if (input.status === "in_progress") {
+      await upsertInProgressCatalogDraft({
+        slug: effectiveSlug,
+        name: effectiveName,
+        website: effectiveWebsite,
+      });
+    } else {
+      await removeCatalogDraftBySlug(effectiveSlug);
+    }
+
+    if (changed && input.status !== "rejected") {
+      await notifySubscribersOnQueueStageChange({
+        companyName: effectiveName,
+        companySlug: effectiveSlug,
+        stage: input.status,
+      });
+    }
+
+    return {
+      updated: true as const,
+      id: found.id,
+      companyName: effectiveName,
+      companySlug: effectiveSlug,
+      status: input.status,
+      previousStatus,
+      changed,
+    };
+  }
 
   const rows = await db<
     Array<{
@@ -330,10 +390,25 @@ export async function updateSubmissionQueueStatus(input: {
     });
   }
 
+  const { removeCatalogDraftBySlug, upsertInProgressCatalogDraft } = await import(
+    "@/lib/catalog-drafts"
+  );
+  const effectiveSlug = resolvedSlug || slugifyCompanyName(row.company_name);
+  const effectiveName = input.companyName?.trim() || row.company_name;
+
+  if (nextStatus === "in_progress") {
+    await upsertInProgressCatalogDraft({
+      slug: effectiveSlug,
+      name: effectiveName,
+    });
+  } else {
+    await removeCatalogDraftBySlug(effectiveSlug);
+  }
+
   if (changed && nextStatus !== "rejected") {
     await notifySubscribersOnQueueStageChange({
-      companyName: input.companyName?.trim() || row.company_name,
-      companySlug: resolvedSlug,
+      companyName: effectiveName,
+      companySlug: effectiveSlug,
       stage: nextStatus,
     });
   }
@@ -341,8 +416,8 @@ export async function updateSubmissionQueueStatus(input: {
   return {
     updated: true as const,
     id: row.id,
-    companyName: row.company_name,
-    companySlug: row.company_slug,
+    companyName: effectiveName,
+    companySlug: effectiveSlug,
     status: nextStatus,
     previousStatus,
     changed,

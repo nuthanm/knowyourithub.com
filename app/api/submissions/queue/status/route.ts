@@ -1,5 +1,5 @@
 import { corsPreflightResponse, jsonResponse } from "@/lib/api/cors";
-import { isDatabaseConfigured, updateSubmissionQueueStatus, type SubmissionQueueStatus } from "@/lib/submissions";
+import { updateSubmissionQueueStatus, type SubmissionQueueStatus } from "@/lib/submissions";
 import { verifyQueueModerationToken } from "@/lib/security/queue-token";
 
 const ALLOWED_STATUSES = new Set<SubmissionQueueStatus>([
@@ -34,10 +34,6 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   if (!hasValidAdminKey(request) && !hasValidModeratorToken(request)) {
     return jsonResponse({ ok: false, error: "Unauthorized." }, request, { status: 401 });
-  }
-
-  if (!isDatabaseConfigured()) {
-    return jsonResponse({ ok: false, error: "Database is not configured." }, request, { status: 503 });
   }
 
   let body: unknown;
