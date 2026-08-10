@@ -3514,7 +3514,7 @@
           "label": "About page"
         },
         {
-          "url": "https://www.myntra.com/careers",
+          "url": "https://careers.myntra.com/",
           "label": "Careers"
         },
         {
@@ -3531,7 +3531,7 @@
       "website": "https://www.myntra.com",
       "category": "hybrid",
       "linkedin": "https://www.linkedin.com/company/myntra",
-      "careersUrl": "https://www.myntra.com/careers",
+      "careersUrl": "https://careers.myntra.com/",
       "contactUrl": "https://www.myntra.com/aboutus",
       "leadership": [
         {
