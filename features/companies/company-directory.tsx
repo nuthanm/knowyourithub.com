@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CATEGORY_COUNTS,
@@ -44,11 +44,15 @@ export function CompanyDirectory() {
 
   const domains = useMemo(() => getCompanyDomains(domainSourceCompanies), [domainSourceCompanies]);
 
-  useEffect(() => {
-    if (domain === "all") return;
-    const stillAvailable = domains.some((item) => item.value === domain);
-    if (!stillAvailable) setDomain("all");
-  }, [domains, domain]);
+  const handleLocationChange = (value: string) => {
+    setLocation(value);
+    setDomain("all");
+  };
+
+  const handleCategoryChange = (value: CompanyCategory | "all") => {
+    setCategory(value);
+    setDomain("all");
+  };
 
   const results = useMemo(() => {
     const filters = {
@@ -104,7 +108,7 @@ export function CompanyDirectory() {
                 <span className="filter-select-label">Location</span>
                 <select
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => handleLocationChange(e.target.value)}
                   aria-label="Filter by location"
                 >
                   <option value="all">All locations</option>
@@ -119,7 +123,7 @@ export function CompanyDirectory() {
                 <span className="filter-select-label">Type</span>
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as CompanyCategory | "all")}
+                  onChange={(e) => handleCategoryChange(e.target.value as CompanyCategory | "all")}
                   aria-label="Filter by company type"
                 >
                   {CATEGORY_OPTIONS.map((opt) => (
