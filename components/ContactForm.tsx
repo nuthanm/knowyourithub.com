@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormActions } from "@/components/FormLayout";
 import { contactSchema, type ContactInput } from "@/lib/validators";
 import { getContactApiUrl } from "@/lib/site-meta";
 import { MathCaptchaField } from "./MathCaptchaField";
+import { AppSelect } from "./AppSelect";
 
 const TOPIC_OPTIONS: Array<{ value: ContactInput["topic"]; label: string }> = [
   { value: "general", label: "General question" },
@@ -26,6 +27,7 @@ export function ContactForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     formState: { errors },
@@ -119,13 +121,20 @@ export function ContactForm() {
 
       <div className="form-field">
         <label htmlFor="contactTopic">Topic *</label>
-        <select id="contactTopic" {...register("topic")}>
-          {TOPIC_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          name="topic"
+          control={control}
+          render={({ field }) => (
+            <AppSelect
+              inputId="contactTopic"
+              ariaLabel="Topic"
+              value={field.value}
+              onChange={field.onChange}
+              options={TOPIC_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+              isSearchable={false}
+            />
+          )}
+        />
         {errors.topic && <p className="form-error">{errors.topic.message}</p>}
       </div>
 

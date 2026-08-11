@@ -13,6 +13,7 @@ import { filterCompanies, getCompanyDomains, getCompanyLocations } from "@/lib/c
 import { CompanyListRowFromEntry, CompanyTileFromEntry } from "@/components/CompanyCard";
 import { AlphabetIndex, groupCompaniesByLetter } from "@/components/AlphabetIndex";
 import { AdSlot } from "@/components/AdSense";
+import { AppSelect } from "@/components/AppSelect";
 
 type ViewMode = "tiles" | "list";
 
@@ -122,10 +123,10 @@ export function CompanyDirectory() {
             <div className="companies-toolbar-filters">
               <label className="filter-select-wrap companies-toolbar-search">
                 <span className="filter-select-label">Company</span>
-                <select
+                <AppSelect
+                  ariaLabel="Search by company"
                   value={selectedCompanySlug}
-                  onChange={(e) => {
-                    const nextValue = e.target.value;
+                  onChange={(nextValue) => {
                     if (nextValue === "all") {
                       setQuery("");
                       return;
@@ -133,59 +134,52 @@ export function CompanyDirectory() {
                     const selected = companySearchOptions.find((option) => option.value === nextValue);
                     setQuery(selected?.label ?? "");
                   }}
-                  aria-label="Search by company"
-                >
-                  <option value="all">Search by company</option>
-                  {companySearchOptions.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "all", label: "Search by company" },
+                    ...companySearchOptions,
+                  ]}
+                  size="compact"
+                />
               </label>
               <label className="filter-select-wrap">
                 <span className="filter-select-label">Location</span>
-                <select
+                <AppSelect
+                  ariaLabel="Filter by location"
                   value={location}
-                  onChange={(e) => handleLocationChange(e.target.value)}
-                  aria-label="Filter by location"
-                >
-                  <option value="all">All locations</option>
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc.toLowerCase()}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
+                  onChange={handleLocationChange}
+                  options={[
+                    { value: "all", label: "All locations" },
+                    ...locations.map((loc) => ({ value: loc.toLowerCase(), label: loc })),
+                  ]}
+                  size="compact"
+                />
               </label>
               <label className="filter-select-wrap">
                 <span className="filter-select-label">Type</span>
-                <select
+                <AppSelect
+                  ariaLabel="Filter by company type"
                   value={category}
-                  onChange={(e) => handleCategoryChange(e.target.value as CompanyCategory | "all")}
-                  aria-label="Filter by company type"
-                >
-                  {CATEGORY_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(nextValue) => handleCategoryChange(nextValue as CompanyCategory | "all")}
+                  options={CATEGORY_OPTIONS.map((opt) => ({ value: opt.id, label: opt.label }))}
+                  isSearchable={false}
+                  size="compact"
+                />
               </label>
               <label className="filter-select-wrap">
                 <span className="filter-select-label">Industry</span>
-                <select
+                <AppSelect
+                  ariaLabel="Filter by company industry"
                   value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                  aria-label="Filter by company industry"
-                >
-                  <option value="all">All industries</option>
-                  {domains.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.preferred ? `Popular · ${item.label}` : item.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setDomain}
+                  options={[
+                    { value: "all", label: "All industries" },
+                    ...domains.map((item) => ({
+                      value: item.value,
+                      label: item.preferred ? `Popular · ${item.label}` : item.label,
+                    })),
+                  ]}
+                  size="compact"
+                />
               </label>
             </div>
             <div className="view-toggle" role="group" aria-label="View mode">

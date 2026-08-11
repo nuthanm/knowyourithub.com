@@ -22,6 +22,7 @@ import { getQueueApiUrl } from "@/lib/site-meta";
 import { queueStatusToSearchStatus, type QueueSubmissionItem } from "@/lib/submissions-shared";
 import { VerificationStatusTag } from "@/components/VerificationStatusTag";
 import { IconCompanies, IconSubmit } from "@/components/PortalIcons";
+import { AppSelect } from "@/components/AppSelect";
 
 const PAGE_SIZE = 20;
 type QueueStatusUpdate = "awaiting_review" | "in_progress" | "verified" | "rejected";
@@ -514,31 +515,25 @@ export function PipelineQueue() {
         <div className="pipeline-toolbar-filters">
           <label className="filter-select-wrap">
             <span className="filter-select-label">Status</span>
-            <select
+            <AppSelect
+              ariaLabel="Filter by status"
               value={status}
-              onChange={(e) => updateStatus(e.target.value as VerificationStatus | "all")}
-              aria-label="Filter by status"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onChange={(nextValue) => updateStatus(nextValue as VerificationStatus | "all")}
+              options={STATUS_OPTIONS.map((opt) => ({ value: opt.id, label: opt.label }))}
+              isSearchable={false}
+              size="compact"
+            />
           </label>
           <label className="filter-select-wrap">
             <span className="filter-select-label">Type</span>
-            <select
+            <AppSelect
+              ariaLabel="Filter by company type"
               value={category}
-              onChange={(e) => updateCategory(e.target.value as CompanyCategory | "all")}
-              aria-label="Filter by company type"
-            >
-              {CATEGORY_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+              onChange={(nextValue) => updateCategory(nextValue as CompanyCategory | "all")}
+              options={CATEGORY_OPTIONS.map((opt) => ({ value: opt.id, label: opt.label }))}
+              isSearchable={false}
+              size="compact"
+            />
           </label>
         </div>
       </div>

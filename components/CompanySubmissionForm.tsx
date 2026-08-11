@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormActions } from "@/components/FormLayout";
 import { COMPANIES, slugifyCompanyName } from "@/lib/companies";
 import { getSubmitApiUrl } from "@/lib/site-meta";
 import { submissionSchema, type SubmissionInput } from "@/lib/validators";
 import { MathCaptchaField } from "./MathCaptchaField";
+import { AppSelect } from "./AppSelect";
 
 type FormValues = SubmissionInput;
 
@@ -153,14 +154,23 @@ export function CompanySubmissionForm({
       {requestType === "edit" && (
         <div className="form-field">
           <label htmlFor="companySlug">Existing company (optional)</label>
-          <select id="companySlug" {...register("companySlug")}>
-            <option value="">Select from catalog…</option>
-            {COMPANIES.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name="companySlug"
+            control={control}
+            render={({ field }) => (
+              <AppSelect
+                inputId="companySlug"
+                ariaLabel="Existing company"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                options={[
+                  { value: "", label: "Select from catalog..." },
+                  ...COMPANIES.map((c) => ({ value: c.slug, label: c.name })),
+                ]}
+                isSearchable
+              />
+            )}
+          />
           <p className="form-hint">
             Or type a slug: {slugifyCompanyName(companyName || "company-name")}
           </p>
