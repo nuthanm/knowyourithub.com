@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CATEGORY_COUNTS,
@@ -39,11 +39,21 @@ export function CompanyDirectory() {
       filterCompanies(VERIFIED_COMPANIES, {
         category,
         location: location === "all" ? undefined : location,
+        domain,
       }),
-    [category, location],
+    [category, location, domain],
   );
 
   const domains = useMemo(() => getCompanyDomains(domainSourceCompanies), [domainSourceCompanies]);
+
+  const companySearchOptions = useMemo(
+    () =>
+      domainSourceCompanies
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((company) => ({ value: company.slug, label: company.name })),
+    [domainSourceCompanies],
+  );
 
   const handleLocationChange = (value: string) => {
     setLocation(value);
@@ -53,10 +63,6 @@ export function CompanyDirectory() {
   const handleCategoryChange = (value: CompanyCategory | "all") => {
     setCategory(value);
     setDomain("all");
-  };
-
-  const clearQuery = () => {
-    setQuery("");
   };
 
   const results = useMemo(() => {
@@ -84,6 +90,25 @@ export function CompanyDirectory() {
     domain === "all" ? undefined : domains.find((item) => item.value === domain)?.label;
   const hasQuery = query.trim().length > 0;
 
+  const selectedCompanySlug = useMemo(
+    () =>
+      companySearchOptions.find((option) => option.label.toLowerCase() === query.trim().toLowerCase())?.value ??
+      "all",
+    [companySearchOptions, query],
+  );
+
+  useEffect(() => {
+    if (!query.trim()) {
+      return;
+    }
+    const selectedStillAvailable = companySearchOptions.some(
+      (option) => option.label.toLowerCase() === query.trim().toLowerCase(),
+    );
+    if (!selectedStillAvailable) {
+      setQuery("");
+    }
+  }, [companySearchOptions, query]);
+
   const grouped = useMemo(() => groupCompaniesByLetter(results), [results]);
 
   const availableLetters = useMemo(
@@ -95,12 +120,6 @@ export function CompanyDirectory() {
     <div className="companies-page">
       <div className="companies-toolbar-sticky">
         <div className="companies-toolbar companies-toolbar-filters-only">
-          {!hasPipeline && (
-            <p className="companies-toolbar-hint">
-              Browse <strong>{CATEGORY_COUNTS.total} verified</strong> companies — sorted A–Z.
-              Use the letter rail on the right to jump to any section.
-            </p>
-          )}
           {hasPipeline && (
             <p className="companies-toolbar-hint">
               Filters below apply to the <strong>{CATEGORY_COUNTS.total} verified</strong> companies in this
@@ -112,29 +131,27 @@ export function CompanyDirectory() {
           <div className="companies-toolbar-controls">
             <div className="companies-toolbar-filters">
               <label className="filter-select-wrap companies-toolbar-search">
-                <span className="filter-select-label">Search</span>
-                <div className="companies-toolbar-search-field">
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") clearQuery();
-                    }}
-                    placeholder="Search company name or website"
-                    aria-label="Search companies"
-                  />
-                  {hasQuery && (
-                    <button
-                      type="button"
-                      className="companies-toolbar-search-clear"
-                      onClick={clearQuery}
-                      aria-label="Clear search"
-                    >
-                      x
-                    </button>
-                  )}
-                </div>
+                <span className="filter-select-label">Company</span>
+                <select
+                  value={selectedCompanySlug}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    if (nextValue === "all") {
+                      setQuery("");
+                      return;
+                    }
+                    const selected = companySearchOptions.find((option) => option.value === nextValue);
+                    setQuery(selected?.label ?? "");
+                  }}
+                  aria-label="Search by company"
+                >
+                  <option value="all">Search by company</option>
+                  {companySearchOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="filter-select-wrap">
                 <span className="filter-select-label">Location</span>
