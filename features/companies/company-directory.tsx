@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CATEGORY_COUNTS,
@@ -65,9 +65,18 @@ export function CompanyDirectory() {
     setDomain("all");
   };
 
+  const selectedCompanySlug = useMemo(
+    () =>
+      companySearchOptions.find((option) => option.label.toLowerCase() === query.trim().toLowerCase())?.value ??
+      "all",
+    [companySearchOptions, query],
+  );
+
+  const effectiveQuery = selectedCompanySlug === "all" ? "" : query;
+
   const results = useMemo(() => {
     const filters = {
-      query,
+      query: effectiveQuery,
       location: location === "all" ? undefined : location,
       category,
       domain,
@@ -84,30 +93,11 @@ export function CompanyDirectory() {
       tags: company.tags,
       profile: company,
     }));
-  }, [query, location, category, domain]);
+  }, [effectiveQuery, location, category, domain]);
 
   const selectedDomainLabel =
     domain === "all" ? undefined : domains.find((item) => item.value === domain)?.label;
-  const hasQuery = query.trim().length > 0;
-
-  const selectedCompanySlug = useMemo(
-    () =>
-      companySearchOptions.find((option) => option.label.toLowerCase() === query.trim().toLowerCase())?.value ??
-      "all",
-    [companySearchOptions, query],
-  );
-
-  useEffect(() => {
-    if (!query.trim()) {
-      return;
-    }
-    const selectedStillAvailable = companySearchOptions.some(
-      (option) => option.label.toLowerCase() === query.trim().toLowerCase(),
-    );
-    if (!selectedStillAvailable) {
-      setQuery("");
-    }
-  }, [companySearchOptions, query]);
+  const hasQuery = effectiveQuery.trim().length > 0;
 
   const grouped = useMemo(() => groupCompaniesByLetter(results), [results]);
 
@@ -220,7 +210,7 @@ export function CompanyDirectory() {
         </div>
         <p className="companies-results-bar">
           Showing <strong>{results.length}</strong> of {CATEGORY_COUNTS.total} verified companies
-          {hasQuery && <> · Search: {query.trim()}</>}
+          {hasQuery && <> · Search: {effectiveQuery.trim()}</>}
           {category !== "all" && <> · {CATEGORY_LABELS[category]}</>}
           {location !== "all" && <> · {location}</>}
           {selectedDomainLabel && <> · {selectedDomainLabel}</>}
