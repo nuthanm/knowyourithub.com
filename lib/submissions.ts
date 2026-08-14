@@ -129,15 +129,26 @@ function buildQueueNote(input: Pick<SubmissionInput, "requestType" | "message">)
   return `Community request — ${summary}`;
 }
 
+type SubscriberNotificationResult = {
+  configured: boolean;
+  recipients: number;
+  delivered: number;
+  failed: number;
+};
+
 async function notifySubscribersOnQueueStageChange(params: {
   companyName: string;
   companySlug?: string;
   stage: Exclude<SubmissionQueueStatus, "rejected">;
-}) {
+}): Promise<SubscriberNotificationResult> {
   try {
-    if (!isMailerConfigured()) return;
+    if (!isMailerConfigured()) {
+      return { configured: false, recipients: 0, delivered: 0, failed: 0 };
+    }
     const subscribers = await listSubscribers(300);
-    if (!subscribers.length) return;
+    if (!subscribers.length) {
+      return { configured: true, recipients: 0, delivered: 0, failed: 0 };
+    }
 
     const mail = buildQueueStageBroadcastEmail({
       companyName: params.companyName,
@@ -149,9 +160,12 @@ async function notifySubscribersOnQueueStageChange(params: {
       .map((subscriber) => subscriber.email?.trim())
       .filter((email): email is string => Boolean(email));
 
-    await Promise.allSettled(recipients.map((to) => sendMail({ to, ...mail })));
+    const results = await Promise.allSettled(recipients.map((to) => sendMail({ to, ...mail })));
+    const delivered = results.filter((result) => result.status === "fulfilled").length;
+    return { configured: true, recipients: recipients.length, delivered, failed: recipients.length - delivered };
   } catch {
     // Status changes must succeed even if subscriber lookup/mail delivery fails.
+    return { configured: isMailerConfigured(), recipients: 0, delivered: 0, failed: 1 };
   }
 }
 
@@ -387,13 +401,13 @@ export async function updateSubmissionQueueStatus(input: {
       await removeCatalogDraftBySlug(effectiveSlug);
     }
 
-    if (changed && input.status !== "rejected") {
-      await notifySubscribersOnQueueStageChange({
+    const subscriberNotification = changed && input.status !== "rejected"
+      ? await notifySubscribersOnQueueStageChange({
         companyName: effectiveName,
         companySlug: effectiveSlug,
         stage: input.status,
-      });
-    }
+      })
+      : undefined;
 
     return {
       updated: true as const,
@@ -403,6 +417,7 @@ export async function updateSubmissionQueueStatus(input: {
       status: input.status,
       previousStatus,
       changed,
+      subscriberNotification,
     };
   }
 
@@ -465,13 +480,13 @@ export async function updateSubmissionQueueStatus(input: {
     await removeCatalogDraftBySlug(effectiveSlug);
   }
 
-  if (changed && nextStatus !== "rejected") {
-    await notifySubscribersOnQueueStageChange({
+  const subscriberNotification = changed && nextStatus !== "rejected"
+    ? await notifySubscribersOnQueueStageChange({
       companyName: effectiveName,
       companySlug: effectiveSlug,
       stage: nextStatus,
-    });
-  }
+    })
+    : undefined;
 
   return {
     updated: true as const,
@@ -481,6 +496,7 @@ export async function updateSubmissionQueueStatus(input: {
     status: nextStatus,
     previousStatus,
     changed,
+    subscriberNotification,
   };
 }
 

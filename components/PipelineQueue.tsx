@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ALL_COMPANY_SLUGS,
@@ -165,6 +165,7 @@ export function PipelineQueue() {
   const searchParams = useSearchParams();
   const staticEntries = useMemo(() => buildPipelineEntries(), []);
   const [communityEntries, setCommunityEntries] = useState<CompanySearchEntry[]>([]);
+  const confirmedStatusUpdates = useRef(new Map<string, QueueStatusUpdate>());
   const [mailBanner, setMailBanner] = useState<{
     companyName: string;
     outcome: "added" | "already_queued";
@@ -192,6 +193,7 @@ export function PipelineQueue() {
   );
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateNotice, setUpdateNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (moderatorToken) {
@@ -211,7 +213,17 @@ export function PipelineQueue() {
       })
       .then((json) => {
         if (!active || !json?.ok || !json.items?.length) return;
-        setCommunityEntries(json.items.map(communityToEntry));
+        setCommunityEntries(
+          json.items
+            .map(communityToEntry)
+            .map((entry) => {
+              if (!entry.submissionId) return entry;
+              const confirmedStatus = confirmedStatusUpdates.current.get(entry.submissionId);
+              return confirmedStatus
+                ? applyQueueStatus([entry], entry.submissionId, confirmedStatus)[0]!
+                : entry;
+            }),
+        );
       })
       .catch(() => undefined);
 
@@ -260,6 +272,7 @@ export function PipelineQueue() {
   async function updateQueueStatus(entry: CompanySearchEntry, next: QueueStatusUpdate) {
     if (!entry.submissionId || !effectiveModeratorToken || updatingId) return;
     setUpdateError(null);
+    setUpdateNotice(null);
     setUpdatingId(entry.submissionId);
     const previousEntries = communityEntries;
 
@@ -285,7 +298,16 @@ export function PipelineQueue() {
       const json = (await res.json()) as {
         ok?: boolean;
         error?: string;
-        item?: { status?: QueueStatusUpdate };
+        item?: {
+          status?: QueueStatusUpdate;
+          changed?: boolean;
+          subscriberNotification?: {
+            configured?: boolean;
+            recipients?: number;
+            delivered?: number;
+            failed?: number;
+          };
+        };
       };
       if (!res.ok || !json.ok) {
         setCommunityEntries(previousEntries);
@@ -294,11 +316,28 @@ export function PipelineQueue() {
       }
 
       const confirmedStatus = json.item?.status;
+      confirmedStatusUpdates.current.set(entry.submissionId, confirmedStatus ?? next);
       if (confirmedStatus && confirmedStatus !== next) {
         setCommunityEntries((prev) => applyQueueStatus(prev, entry.submissionId!, confirmedStatus));
       }
+
+      const notification = json.item?.subscriberNotification;
+      if (json.item?.changed && next !== "rejected") {
+        if (!notification?.configured) {
+          setUpdateNotice("Status saved. Subscriber email was not sent because SMTP is not configured.");
+        } else if (notification.failed) {
+          setUpdateNotice("Status saved. Some subscriber emails could not be delivered.");
+        } else if (notification.delivered) {
+          setUpdateNotice(
+            `Status saved. Subscriber email sent to ${notification.delivered} ${notification.delivered === 1 ? "recipient" : "recipients"}.`,
+          );
+        } else {
+          setUpdateNotice("Status saved. There are no subscriber email addresses to notify.");
+        }
+      }
     } catch {
       setCommunityEntries(previousEntries);
+      confirmedStatusUpdates.current.delete(entry.submissionId);
       setUpdateError("Unable to update queue status.");
     } finally {
       setUpdatingId(null);
@@ -476,6 +515,11 @@ export function PipelineQueue() {
         {updateError && (
           <p className="pipeline-results-bar" role="alert" style={{ marginTop: 8 }}>
             {updateError}
+          </p>
+        )}
+        {updateNotice && (
+          <p className="pipeline-results-bar" role="status" style={{ marginTop: 8 }}>
+            {updateNotice}
           </p>
         )}
       </div>
