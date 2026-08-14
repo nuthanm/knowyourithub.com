@@ -178,7 +178,7 @@ export function buildUserConfirmationEmail(input: SubmissionInput & { id: string
   const site = getSiteUrl();
   const subject = `We received your ${SITE_NAME} request (${DATA_YEAR} catalog)`;
   const updateLine = input.subscribeToUpdates
-    ? "You opted in to email alerts when we add or verify companies — notifications are rolling out soon."
+    ? "You opted in to email alerts. We will notify you when this request moves through review and when new companies are verified."
     : "";
   const text = [
     `Hi ${input.submitterName},`,

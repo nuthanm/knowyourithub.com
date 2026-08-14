@@ -100,6 +100,26 @@ function communityToEntry(item: QueueSubmissionItem): CompanySearchEntry {
   };
 }
 
+function applyQueueStatus(
+  items: CompanySearchEntry[],
+  submissionId: string,
+  next: QueueStatusUpdate,
+): CompanySearchEntry[] {
+  if (next === "verified" || next === "rejected") {
+    return items.filter((item) => item.submissionId !== submissionId);
+  }
+
+  const nextStatus: VerificationStatus = queueStatusToSearchStatus(next);
+  return items.map((item) =>
+    item.submissionId === submissionId
+      ? {
+          ...item,
+          verificationStatus: nextStatus,
+        }
+      : item,
+  );
+}
+
 type StatTileProps = {
   label: string;
   value: number;
@@ -181,7 +201,7 @@ export function PipelineQueue() {
   useEffect(() => {
     let active = true;
 
-    void fetch(getQueueApiUrl(), { method: "GET" })
+    void fetch(getQueueApiUrl(), { method: "GET", cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
         return (await res.json()) as { ok?: boolean; items?: QueueSubmissionItem[] };
@@ -206,7 +226,7 @@ export function PipelineQueue() {
     let active = true;
     const verifyUrl = `${getQueueApiUrl()}?banner=${encodeURIComponent(bannerToken)}`;
 
-    void fetch(verifyUrl, { method: "GET" })
+    void fetch(verifyUrl, { method: "GET", cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) return null;
         return (await res.json()) as {
@@ -258,10 +278,15 @@ export function PipelineQueue() {
     if (!entry.submissionId || !effectiveModeratorToken || updatingId) return;
     setUpdateError(null);
     setUpdatingId(entry.submissionId);
+    const previousEntries = communityEntries;
+
+    // Optimistic update keeps moderation UX responsive even when network/email is slow.
+    setCommunityEntries((prev) => applyQueueStatus(prev, entry.submissionId!, next));
 
     try {
       const res = await fetch(`${getQueueApiUrl()}/status`, {
         method: "POST",
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           "x-moderator-token": effectiveModeratorToken,
@@ -274,28 +299,23 @@ export function PipelineQueue() {
         }),
       });
 
-      const json = (await res.json()) as { ok?: boolean; error?: string };
+      const json = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        item?: { status?: QueueStatusUpdate };
+      };
       if (!res.ok || !json.ok) {
+        setCommunityEntries(previousEntries);
         setUpdateError(json.error || "Unable to update queue status.");
         return;
       }
 
-      setCommunityEntries((prev) => {
-        if (next === "verified" || next === "rejected") {
-          return prev.filter((item) => item.submissionId !== entry.submissionId);
-        }
-
-        const nextStatus = next === "in_progress" ? "in_progress" : "unverified";
-        return prev.map((item) =>
-          item.submissionId === entry.submissionId
-            ? {
-                ...item,
-                verificationStatus: nextStatus,
-              }
-            : item,
-        );
-      });
+      const confirmedStatus = json.item?.status;
+      if (confirmedStatus && confirmedStatus !== next) {
+        setCommunityEntries((prev) => applyQueueStatus(prev, entry.submissionId!, confirmedStatus));
+      }
     } catch {
+      setCommunityEntries(previousEntries);
       setUpdateError("Unable to update queue status.");
     } finally {
       setUpdatingId(null);

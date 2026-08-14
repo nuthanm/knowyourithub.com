@@ -13,6 +13,14 @@ import { AppSelect } from "./AppSelect";
 
 type FormValues = SubmissionInput;
 
+function formatRetryAfter(retryAfterSeconds: number) {
+  const minutes = Math.floor(retryAfterSeconds / 60);
+  const seconds = retryAfterSeconds % 60;
+  if (minutes === 0) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  if (seconds === 0) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  return `${minutes} minute${minutes === 1 ? "" : "s"} and ${seconds} seconds`;
+}
+
 export function CompanySubmissionForm({
   initialSlug,
   initialCompanyName,
@@ -82,8 +90,16 @@ export function CompanySubmissionForm({
           captchaAnswer: answer,
         }),
       });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
+      const json = (await res.json()) as { ok?: boolean; error?: string; retryAfterSeconds?: number };
       if (!res.ok || !json.ok) {
+        if (res.status === 429) {
+          const retryAfterSeconds = Number.isFinite(json.retryAfterSeconds)
+            ? Math.max(1, Math.ceil(json.retryAfterSeconds as number))
+            : 10 * 60;
+          throw new Error(
+            `This network has reached the submission limit. Please wait ${formatRetryAfter(retryAfterSeconds)} before trying again. Alternatively, email your request to inbox.nuthan@gmail.com and we will add it to the review queue.`,
+          );
+        }
         throw new Error(json.error || "Unable to submit request.");
       }
       setStatus("success");

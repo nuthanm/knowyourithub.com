@@ -44,7 +44,11 @@ export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions
   const rate = await checkRateLimitAsync(ip);
   if (rate.blocked) {
     return jsonResponse(
-      { ok: false, error: "Too many requests. Please try again later." },
+      {
+        ok: false,
+        error: "Too many requests. Please try again later.",
+        retryAfterSeconds: rate.retryAfterSec ?? 60,
+      },
       options.request,
       { status: 429, headers: { "Retry-After": String(rate.retryAfterSec ?? 60) } },
     );

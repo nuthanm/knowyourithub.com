@@ -134,23 +134,24 @@ async function notifySubscribersOnQueueStageChange(params: {
   companySlug?: string;
   stage: Exclude<SubmissionQueueStatus, "rejected">;
 }) {
-  if (!isMailerConfigured()) return;
-  const subscribers = await listSubscribers(300);
-  if (!subscribers.length) return;
+  try {
+    if (!isMailerConfigured()) return;
+    const subscribers = await listSubscribers(300);
+    if (!subscribers.length) return;
 
-  const mail = buildQueueStageBroadcastEmail({
-    companyName: params.companyName,
-    companySlug: params.companySlug,
-    stage: params.stage,
-  });
+    const mail = buildQueueStageBroadcastEmail({
+      companyName: params.companyName,
+      companySlug: params.companySlug,
+      stage: params.stage,
+    });
 
-  for (const subscriber of subscribers) {
-    if (!subscriber.email) continue;
-    try {
-      await sendMail({ to: subscriber.email, ...mail });
-    } catch {
-      // Continue notifying others even if a single delivery fails.
-    }
+    const recipients = subscribers
+      .map((subscriber) => subscriber.email?.trim())
+      .filter((email): email is string => Boolean(email));
+
+    await Promise.allSettled(recipients.map((to) => sendMail({ to, ...mail })));
+  } catch {
+    // Status changes must succeed even if subscriber lookup/mail delivery fails.
   }
 }
 
