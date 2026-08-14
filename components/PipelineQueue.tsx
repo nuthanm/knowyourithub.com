@@ -445,7 +445,7 @@ export function PipelineQueue() {
         </p>
         {effectiveModeratorToken && (
           <p className="pipeline-results-bar" role="status" style={{ marginTop: 8 }}>
-            Moderation mode active (secure email link)
+            Moderation mode active for this browser session
             {moderatorTokenExp ? ` · token expires ${formatExpiry(moderatorTokenExp)}` : ""}
           </p>
         )}
@@ -466,6 +466,9 @@ export function PipelineQueue() {
                   }
                 }}
               />
+              <span className="pipeline-passcode-help">
+                Use the configured review passcode. It is not generated on this page.
+              </span>
             </label>
             <div className="pipeline-toolbar-filters">
               <button
@@ -612,13 +615,14 @@ export function PipelineQueue() {
                   </td>
                   <td className="pipeline-grid-note">{entry.note ?? entry.tagline ?? "—"}</td>
                   <td className="pipeline-grid-action">
-                    <Link href={entryHref(entry)} className="catalog-pipeline-action">
-                      {entry.communityRequest && !ALL_COMPANY_SLUGS.includes(entry.slug)
-                        ? "Details"
-                        : "View"}
-                    </Link>
+                    <div className="pipeline-grid-actions">
+                      <Link href={entryHref(entry)} className="catalog-pipeline-action">
+                        {entry.communityRequest && !ALL_COMPANY_SLUGS.includes(entry.slug)
+                          ? "Details"
+                          : "View"}
+                      </Link>
                     {effectiveModeratorToken && entry.communityRequest && entry.submissionId && (
-                      <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                      <div className="pipeline-moderation-actions">
                         <button
                           type="button"
                           className="catalog-pipeline-action"
@@ -653,6 +657,7 @@ export function PipelineQueue() {
                         </button>
                       </div>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))

@@ -190,6 +190,7 @@ Open http://localhost:3000
 - Environment template: .env.example
 - Optional persistence: PostgreSQL via DATABASE_URL
 - Optional API hardening: ADMIN_API_KEY and CORS origins
+- Review queue moderation: set REVIEW_QUEUE_PASSCODE (or use ADMIN_API_KEY as its fallback)
 - Optional strict deployment gate: CATALOG_DB_REQUIRED=1
 
 Catalog sync commands:
