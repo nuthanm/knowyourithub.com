@@ -40506,6 +40506,487 @@
       ],
       "verificationStatus": "verified"
     }
+,
+    {
+      "hq": "Tokyo, Japan",
+      "name": "Mizuho Financial Group",
+      "slug": "mizuho",
+      "tags": [
+        "MNC",
+        "Public company",
+        "Financial services"
+      ],
+      "domains": [
+        "Banking",
+        "Capital markets",
+        "Asset management"
+      ],
+      "founded": "2003",
+      "sources": [
+        {
+          "url": "https://www.mizuhogroup.com/company/outline",
+          "label": "Company outline"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/company/executives",
+          "label": "Leadership"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/investors",
+          "label": "Investor relations"
+        },
+        {
+          "url": "https://www.mizuhogroup.com/careers",
+          "label": "Careers"
+        }
+      ],
+      "tagline": "Global financial group with banking, trust, and securities services",
+      "website": "https://www.mizuhogroup.com",
+      "category": "service",
+      "linkedin": "https://www.linkedin.com/company/mizuho",
+      "services": [
+        "Corporate and retail banking",
+        "Trust banking",
+        "Investment and securities services",
+        "Asset management"
+      ],
+      "careersUrl": "https://www.mizuhogroup.com/careers",
+      "contactUrl": "https://www.mizuhogroup.com/contact",
+      "leadership": [
+        {
+          "name": "Masahiro Kihara",
+          "role": "President & Group CEO"
+        }
+      ],
+      "description": "Mizuho Financial Group is a Japan-based global financial institution group providing banking, trust, securities, and asset management services to retail, corporate, and institutional customers.",
+      "lastVerified": "2026-08-10",
+      "onsitePolicy": "Hybrid and role-dependent; verify on careers pages",
+      "officeCountries": [
+        "Japan",
+        "United States",
+        "United Kingdom",
+        "Singapore",
+        "India"
+      ],
+      "verificationStatus": "verified"
+    },
+    {
+      "slug": "better",
+      "name": "Better",
+      "category": "service",
+      "tagline": "Product engineering and growth team for founders",
+      "description": "Better is a product engineering and growth team that helps founders and technical leaders build software and acquire customers. Its teams provide web and mobile development, cloud and DevOps, AI integration, and growth marketing services.",
+      "website": "https://btr.group/",
+      "hq": "Unknown",
+      "domains": [
+        "Product engineering",
+        "Growth marketing",
+        "Cloud and DevOps"
+      ],
+      "tags": [
+        "Founder-led",
+        "IT services"
+      ],
+      "services": [
+        "Web and mobile application development",
+        "Cloud infrastructure and DevOps",
+        "AI integration and automation",
+        "Growth marketing and customer acquisition"
+      ],
+      "careersUrl": "https://btr.group/life",
+      "leadership": [
+        {
+          "name": "Jai Jalan",
+          "role": "Founder & CEO"
+        }
+      ],
+      "vision": "Build the software and grow the demand for founders from first line of code to first million users.",
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Better company overview",
+          "url": "https://btr.group/"
+        },
+        {
+          "label": "Life at Better",
+          "url": "https://btr.group/life"
+        },
+        {
+          "label": "Careers",
+          "url": "https://wellfound.com/company/btrgroup/jobs"
+        },
+        {
+          "label": "LinkedIn",
+          "url": "https://www.linkedin.com/company/bettrhqq/"
+        }
+      ]
+    },
+    {
+      "slug": "celigo",
+      "name": "Celigo",
+      "category": "product",
+      "tagline": "AI-powered integration platform for process automation",
+      "description": "Celigo provides an AI-powered integration platform that connects business systems and automates cross-application processes. Its process-centric platform is designed for integration, automation, and workflow optimization.",
+      "website": "https://www.celigo.com/",
+      "hq": "Redwood City, California, United States",
+      "officeCities": [
+        "Redwood City",
+        "Hyderabad",
+        "Amsterdam",
+        "Sydney",
+        "Bristol",
+        "Frankfurt"
+      ],
+      "officeCountries": [
+        "United States",
+        "India",
+        "Netherlands",
+        "Australia",
+        "United Kingdom",
+        "Germany"
+      ],
+      "totalOfficeLocations": "6 offices",
+      "locationsUrl": "https://www.celigo.com/about-us/",
+      "contactUrl": "https://www.celigo.com/contact-us/",
+      "domains": [
+        "iPaaS",
+        "Business process automation",
+        "Enterprise integration"
+      ],
+      "tags": [
+        "SaaS",
+        "Global delivery"
+      ],
+      "products": [
+        "Celigo Intelligent Automation Platform",
+        "API Management",
+        "B2B Manager",
+        "Data Ingestion"
+      ],
+      "careersUrl": "https://www.celigo.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/celigo-inc/",
+      "leadership": [
+        {
+          "name": "Jan Arendtsz",
+          "role": "Founder & CEO"
+        },
+        {
+          "name": "Scott Henderson",
+          "role": "Chief Technology Officer"
+        }
+      ],
+      "vision": "Deliver an automation platform that redefines process integration, automation, and optimization.",
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "About Celigo and global offices",
+          "url": "https://www.celigo.com/about-us/"
+        },
+        {
+          "label": "Leadership",
+          "url": "https://www.celigo.com/about-us/leadership/"
+        },
+        {
+          "label": "Platform",
+          "url": "https://www.celigo.com/platform/"
+        },
+        {
+          "label": "Careers",
+          "url": "https://www.celigo.com/careers/"
+        }
+      ]
+    },
+    {
+      "slug": "centific",
+      "name": "Centific",
+      "category": "product",
+      "tagline": "AI data platforms and services for reliable real-world systems",
+      "description": "Centific is a global data and AI solutions company that designs, builds, and operates data systems for training, evaluating, and scaling AI. Its platforms and expert network support AI deployment across languages, domains, and industries.",
+      "website": "https://centific.com/",
+      "hq": "Redmond, Washington, United States",
+      "officeCities": [
+        "Redmond",
+        "Hyderabad",
+        "Chennai",
+        "Beijing",
+        "Shanghai",
+        "Singapore"
+      ],
+      "officeCountries": [
+        "United States",
+        "India",
+        "China",
+        "Spain",
+        "Serbia",
+        "Malaysia",
+        "Singapore",
+        "Taiwan"
+      ],
+      "locationsUrl": "https://centific.com/company/locations/",
+      "contactUrl": "https://centific.com/contact/contact/",
+      "domains": [
+        "Artificial intelligence",
+        "AI data",
+        "Data governance"
+      ],
+      "tags": [
+        "Global delivery",
+        "Enterprise AI"
+      ],
+      "products": [
+        "AI Data Foundry",
+        "Data Canvas",
+        "Data Marketplace",
+        "OneForma"
+      ],
+      "careersUrl": "https://centific.com/company/careers/",
+      "linkedin": "https://www.linkedin.com/company/centificglobal/",
+      "leadership": [
+        {
+          "name": "Chuen Hong Lew",
+          "role": "CEO"
+        }
+      ],
+      "vision": "Help the world build AI that understands people.",
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "About Centific",
+          "url": "https://centific.com/company/about/"
+        },
+        {
+          "label": "Global locations",
+          "url": "https://centific.com/company/locations/"
+        },
+        {
+          "label": "Leadership transition",
+          "url": "https://centific.com/blog/centific-announces-leadership-transition-chuen-hong-lew-to-succeed-venkat-rangapuram-as-chief-executive-officer"
+        },
+        {
+          "label": "Careers",
+          "url": "https://centific.com/company/careers/"
+        }
+      ]
+    },
+    {
+      "slug": "hyland",
+      "name": "Hyland",
+      "category": "product",
+      "tagline": "Enterprise content management and Process automation solutions",
+      "description": "Hyland provides Enterprise content management and Process automation solutions for organizations.",
+      "website": "https://www.hyland.com/",
+      "hq": "Westlake, Ohio, United States",
+      "careersUrl": "https://www.hyland.com/en/company/careers",
+      "linkedin": "https://www.linkedin.com/company/hyland-ai/",
+      "domains": [
+        "Enterprise content management",
+        "Process automation"
+      ],
+      "tags": [
+        "Enterprise software"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://www.hyland.com/en/company"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://www.hyland.com/en/contact-us"
+        }
+      ]
+    },
+    {
+      "slug": "kissflow",
+      "name": "Kissflow",
+      "category": "product",
+      "tagline": "Low-code and Workflow automation solutions",
+      "description": "Kissflow provides Low-code and Workflow automation solutions for organizations.",
+      "website": "https://kissflow.com/",
+      "hq": "Chennai, India",
+      "careersUrl": "https://careers.kissflow.com/",
+      "linkedin": "https://www.linkedin.com/company/kissflow/",
+      "domains": [
+        "Low-code",
+        "Workflow automation"
+      ],
+      "tags": [
+        "SaaS"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://kissflow.com/about-us/"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://kissflow.com/contact/"
+        },
+        {
+          "label": "Recognitions and awards",
+          "url": "https://kissflow.com/analyst-reports"
+        }
+      ]
+    },
+    {
+      "slug": "precisely",
+      "name": "Precisely",
+      "category": "hybrid",
+      "tagline": "Data integrity and Data governance solutions",
+      "description": "Precisely provides Data integrity and Data governance solutions for organizations.",
+      "website": "https://www.precisely.com/",
+      "hq": "Burlington, Massachusetts, United States",
+      "careersUrl": "https://www.precisely.com/careers-and-culture/",
+      "linkedin": "https://www.linkedin.com/company/preciselydata/",
+      "domains": [
+        "Data integrity",
+        "Data governance"
+      ],
+      "tags": [
+        "Enterprise software"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://www.precisely.com/about-us/"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://www.precisely.com/contact/"
+        },
+        {
+          "label": "Recognitions and awards",
+          "url": "https://www.precisely.com/about-us/awards/"
+        },
+        {
+          "label": "Leadership",
+          "url": "https://www.precisely.com/leadership/"
+        },
+        {
+          "label": "About Precisely and global offices",
+          "url": "https://www.precisely.com/global-offices/"
+        }
+      ]
+    },
+    {
+      "slug": "teceze",
+      "name": "TECEZE",
+      "category": "service",
+      "tagline": "IT services and Cybersecurity solutions",
+      "description": "TECEZE provides IT services and Cybersecurity solutions for organizations.",
+      "website": "https://teceze.com/",
+      "hq": "Chennai, India",
+      "careersUrl": "https://teceze.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/teceze/",
+      "domains": [
+        "IT services",
+        "Cybersecurity"
+      ],
+      "tags": [
+        "Global delivery"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://teceze.com/about-us/"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://teceze.com/contact-us/"
+        }
+      ]
+    },
+    {
+      "slug": "valuelabs",
+      "name": "ValueLabs",
+      "category": "service",
+      "tagline": "Digital transformation and AI services solutions",
+      "description": "ValueLabs provides Digital transformation and AI services solutions for organizations.",
+      "website": "https://www.valuelabs.com/",
+      "hq": "Hyderabad, India",
+      "careersUrl": "https://www.valuelabs.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/valuelabs/",
+      "domains": [
+        "Digital transformation",
+        "AI services"
+      ],
+      "tags": [
+        "Global delivery"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://www.valuelabs.com/about-us/"
+        },
+        {
+          "label": "Life at ValueLabs",
+          "url": "https://www.valuelabs.com/life-at-valuelabs/"
+        },
+        {
+          "label": "Locations",
+          "url": "https://www.valuelabs.com/locations/"
+        },
+        {
+          "label": "Leadership",
+          "url": "https://www.valuelabs.com/leadership/"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://www.valuelabs.com/contact-us/"
+        }
+      ]
+    },
+    {
+      "slug": "zuci-systems",
+      "name": "zuci Systems",
+      "category": "service",
+      "tagline": "Quality engineering and Data engineering solutions",
+      "description": "zuci Systems provides Quality engineering and Data engineering solutions for organizations.",
+      "website": "https://www.zucisystems.com/",
+      "hq": "Plano, Texas, United States",
+      "careersUrl": "https://www.zucisystems.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/zuci-systems/",
+      "domains": [
+        "Quality engineering",
+        "Data engineering"
+      ],
+      "tags": [
+        "Global delivery"
+      ],
+      "lastVerified": "2026-08-14",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://www.zucisystems.com/about-us/"
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://www.zucisystems.com/contact-us/"
+        },
+        {
+          "label": "Life at Zuci Systems",
+          "url": "https://www.zucisystems.com/careers/"
+        },
+        {
+          "label": "Work at Zuci Systems",
+          "url": "https://www.zucisystems.com/careers/work-at-zuci/"
+        }
+      ]
+    }
   ],
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
   "catalogUpdated": "2026-08-07"
