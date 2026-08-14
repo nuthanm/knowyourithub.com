@@ -67,11 +67,12 @@ async function upstashCommand(command: unknown[]) {
 }
 
 export function isPendingJsonConfigured() {
-  return true;
+  return hasUpstash() || process.env.NODE_ENV !== "production";
 }
 
 export async function readPendingQueueJson(): Promise<QueueSubmissionItem[]> {
   if (!hasUpstash()) {
+    if (process.env.NODE_ENV === "production") return [];
     return readLocalPendingQueueJson();
   }
 
@@ -93,6 +94,7 @@ export async function upsertPendingQueueJson(item: QueueSubmissionItem) {
   );
 
   if (!hasUpstash()) {
+    if (process.env.NODE_ENV === "production") return { stored: false };
     const stored = await writeLocalPendingQueueJson(next);
     return { stored };
   }

@@ -32,7 +32,7 @@ export function CompanySubmissionForm({
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaError, setCaptchaError] = useState("");
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   const {
@@ -90,7 +90,12 @@ export function CompanySubmissionForm({
           captchaAnswer: answer,
         }),
       });
-      const json = (await res.json()) as { ok?: boolean; error?: string; retryAfterSeconds?: number };
+      const json = (await res.json()) as {
+        ok?: boolean;
+        duplicate?: boolean;
+        error?: string;
+        retryAfterSeconds?: number;
+      };
       if (!res.ok || !json.ok) {
         if (res.status === 429) {
           const retryAfterSeconds = Number.isFinite(json.retryAfterSeconds)
@@ -102,7 +107,7 @@ export function CompanySubmissionForm({
         }
         throw new Error(json.error || "Unable to submit request.");
       }
-      setStatus("success");
+      setStatus(json.duplicate ? "duplicate" : "success");
     } catch (err) {
       setStatus("error");
       setErrorMessage(err instanceof Error ? err.message : "Unable to submit request.");
@@ -128,6 +133,21 @@ export function CompanySubmissionForm({
         )}
         <Link href="/" className="app-btn primary">
           Back to browse
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "duplicate") {
+    return (
+      <div className="form-success">
+        <h2>Company already added</h2>
+        <p>
+          {companyName || "This company"} is already in the review queue. We keep one active request
+          per company so the team can review it without duplicates.
+        </p>
+        <Link href="/coming-soon" className="app-btn primary">
+          View review queue
         </Link>
       </div>
     );

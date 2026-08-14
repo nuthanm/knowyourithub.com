@@ -28,6 +28,7 @@ export async function GET(request: Request) {
         fromMail: true,
         companyName: verified.companyName,
         id: verified.id,
+        outcome: verified.outcome,
       },
       request,
       noStore,

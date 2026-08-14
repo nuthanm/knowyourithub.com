@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     companySlug: payload.companySlug,
   });
 
-  await enqueueSubmissionFromMail({
+  const result = await enqueueSubmissionFromMail({
     id: payload.id,
     requestType: payload.requestType,
     companyName: payload.companyName,
@@ -39,7 +39,18 @@ export async function GET(request: Request) {
     acceptPolicy: true,
   });
 
-  const bannerToken = createMailBannerToken(payload.companyName, payload.id);
+  if (!result.stored) {
+    return new Response("The review queue is temporarily unavailable. Please try again later.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  const bannerToken = createMailBannerToken(
+    result.item.name,
+    result.item.id,
+    result.duplicate ? "already_queued" : "added",
+  );
   const catalog = getCatalogUrl();
   const redirectTo = new URL(`${catalog}/coming-soon/`);
   redirectTo.searchParams.set("from", "mail");

@@ -184,9 +184,63 @@ export async function saveSubmission(input: SubmissionInput & { id: string }) {
   return { stored: true as const };
 }
 
+function queueItemsMatch(left: QueueSubmissionItem, right: QueueSubmissionItem) {
+  const leftKeys = getCompanyAliasKeys(left.name, left.slug, left.website);
+  const rightKeys = getCompanyAliasKeys(right.name, right.slug, right.website);
+  return [...leftKeys].some((key) => rightKeys.has(key));
+}
+
+async function findActiveQueueSubmission(item: QueueSubmissionItem) {
+  const db = getSql();
+  const candidates: QueueSubmissionItem[] = [];
+
+  if (db) {
+    const rows = await db<
+      Array<{
+        id: string;
+        request_type: "add" | "edit";
+        status: string;
+        company_name: string;
+        company_slug: string | null;
+        website: string | null;
+        message: string;
+        created_at: Date;
+      }>
+    >`
+      SELECT id, request_type, status, company_name, company_slug, website, message, created_at
+      FROM company_submissions
+      WHERE status = ANY(${ACTIVE_QUEUE_STATUSES}) OR status = 'pending'
+      ORDER BY created_at DESC
+      LIMIT 200
+    `;
+
+    candidates.push(
+      ...rows.map((row) => ({
+        id: row.id,
+        slug: row.company_slug?.trim() || slugifyCompanyName(row.company_name),
+        name: row.company_name.trim(),
+        requestType: row.request_type,
+        queueStatus: mapDbSubmissionStatus(row.status),
+        note: buildQueueNote({ requestType: row.request_type, message: row.message }),
+        submittedAt: row.created_at.toISOString(),
+        website: row.website?.trim() || undefined,
+      })),
+    );
+  }
+
+  const { readPendingQueueJson } = await import("@/lib/pending-queue-store");
+  candidates.push(...(await readPendingQueueJson()));
+
+  return candidates.find(
+    (candidate) =>
+      ACTIVE_QUEUE_STATUSES.includes(candidate.queueStatus ?? "awaiting_review") &&
+      queueItemsMatch(candidate, item),
+  );
+}
+
 export async function enqueueSubmissionFromMail(
   input: SubmissionInput & { id: string },
-): Promise<{ stored: boolean; item: QueueSubmissionItem }> {
+): Promise<{ stored: boolean; duplicate: boolean; item: QueueSubmissionItem }> {
   const slug = resolveSubmissionSlug(input);
   const item: QueueSubmissionItem = {
     id: input.id,
@@ -199,11 +253,16 @@ export async function enqueueSubmissionFromMail(
     website: input.website?.trim() || undefined,
   };
 
+  const existing = await findActiveQueueSubmission(item);
+  if (existing) {
+    return { stored: true, duplicate: true, item: existing };
+  }
+
   const dbResult = await saveSubmission(input);
   const { upsertPendingQueueJson } = await import("@/lib/pending-queue-store");
   const jsonResult = await upsertPendingQueueJson(item);
 
-  return { stored: dbResult.stored || jsonResult.stored, item };
+  return { stored: dbResult.stored || jsonResult.stored, duplicate: false, item };
 }
 
 export async function listQueueSubmissions() {

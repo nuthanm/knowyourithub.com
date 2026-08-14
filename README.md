@@ -59,7 +59,7 @@ Core goal:
 
 - data/companies.json as primary catalog source
 - Optional PostgreSQL storage for submissions
-- Optional JSON-backed queue fallback for pending review
+- Local JSON-backed queue fallback for development; production review queues require PostgreSQL or Upstash Redis
 - Optional PostgreSQL snapshots for catalog distribution to keep repo data private
 
 ## Architecture
@@ -118,7 +118,8 @@ flowchart TB
 
 - Visitor submits add/edit request through the site.
 - Server validates schema, CAPTCHA, anti-bot signals, and sanitization.
-- Request is stored in PostgreSQL when configured; JSON fallback can retain queue entries.
+- Requests are stored in PostgreSQL or Upstash Redis in production. Local development uses a JSON fallback.
+- A second active request for the same company is reported as already queued instead of creating a duplicate.
 - Queue endpoint filters duplicates and items already covered in catalog/pipeline.
 - Maintainer reviews pending entries before publication.
 
@@ -188,7 +189,8 @@ Open http://localhost:3000
 
 - Deploy target: Vercel
 - Environment template: .env.example
-- Optional persistence: PostgreSQL via DATABASE_URL
+- Production review queue persistence: configure PostgreSQL via DATABASE_URL, or both Upstash variables
+- Local-only queue fallback: JSON file storage when neither persistence provider is configured
 - Optional API hardening: ADMIN_API_KEY and CORS origins
 - Review queue moderation: set REVIEW_QUEUE_PASSCODE (or use ADMIN_API_KEY as its fallback)
 - Optional strict deployment gate: CATALOG_DB_REQUIRED=1

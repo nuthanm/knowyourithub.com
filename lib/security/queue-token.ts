@@ -71,15 +71,21 @@ export function verifyQueueAcceptToken(token?: string | null): QueueAcceptPayloa
 }
 
 /** Short-lived banner token — proves the visitor came from the mail accept link. */
-export function createMailBannerToken(companyName: string, id: string) {
+export function createMailBannerToken(
+  companyName: string,
+  id: string,
+  outcome: "added" | "already_queued" = "added",
+) {
   const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
-  const body = Buffer.from(JSON.stringify({ companyName, id, exp: expiresAt }), "utf8").toString(
+  const body = Buffer.from(JSON.stringify({ companyName, id, outcome, exp: expiresAt }), "utf8").toString(
     "base64url",
   );
   return `${body}.${sign(body)}`;
 }
 
-export function verifyMailBannerToken(token?: string | null): { companyName: string; id: string } | null {
+export function verifyMailBannerToken(
+  token?: string | null,
+): { companyName: string; id: string; outcome: "added" | "already_queued" } | null {
   if (!token) return null;
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
@@ -95,10 +101,15 @@ export function verifyMailBannerToken(token?: string | null): { companyName: str
     const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as {
       companyName?: string;
       id?: string;
+      outcome?: unknown;
       exp?: number;
     };
     if (!parsed.companyName || !parsed.id || !parsed.exp || Date.now() > parsed.exp) return null;
-    return { companyName: parsed.companyName, id: parsed.id };
+    return {
+      companyName: parsed.companyName,
+      id: parsed.id,
+      outcome: parsed.outcome === "already_queued" ? "already_queued" : "added",
+    };
   } catch {
     return null;
   }

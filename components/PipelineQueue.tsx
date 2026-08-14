@@ -165,7 +165,10 @@ export function PipelineQueue() {
   const searchParams = useSearchParams();
   const staticEntries = useMemo(() => buildPipelineEntries(), []);
   const [communityEntries, setCommunityEntries] = useState<CompanySearchEntry[]>([]);
-  const [mailBannerCompany, setMailBannerCompany] = useState<string | null>(null);
+  const [mailBanner, setMailBanner] = useState<{
+    companyName: string;
+    outcome: "added" | "already_queued";
+  } | null>(null);
   const moderatorToken = useMemo(() => searchParams.get("moderate")?.trim() ?? "", [searchParams]);
   const [localModeratorToken, setLocalModeratorToken] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -233,35 +236,15 @@ export function PipelineQueue() {
           ok?: boolean;
           fromMail?: boolean;
           companyName?: string;
-          id?: string;
+          outcome?: "added" | "already_queued";
         };
       })
       .then((json) => {
         if (!active || !json?.ok || !json.fromMail || !json.companyName) return;
-        setMailBannerCompany(json.companyName);
-        if (json.id) {
-          setCommunityEntries((prev) => {
-            if (prev.some((entry) => entry.submissionId === json.id || entry.name === json.companyName)) {
-              return prev;
-            }
-            const slug = json
-              .companyName!.toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, "");
-            return [
-              communityToEntry({
-                id: json.id!,
-                slug,
-                name: json.companyName!,
-                requestType: "add",
-                queueStatus: "awaiting_review",
-                note: "Added from admin email approval",
-                submittedAt: new Date().toISOString(),
-              }),
-              ...prev,
-            ];
-          });
-        }
+        setMailBanner({
+          companyName: json.companyName,
+          outcome: json.outcome === "already_queued" ? "already_queued" : "added",
+        });
         const url = new URL(window.location.href);
         url.searchParams.delete("from");
         url.searchParams.delete("banner");
@@ -416,14 +399,17 @@ export function PipelineQueue() {
 
   return (
     <section className="pipeline-dashboard" aria-labelledby="pipeline-dashboard-title">
-      {mailBannerCompany && (
+      {mailBanner && (
         <div className="queue-mail-banner" role="status">
-          <strong>{mailBannerCompany}</strong> added in the queue
+          <strong>{mailBanner.companyName}</strong>{" "}
+          {mailBanner.outcome === "already_queued"
+            ? "is already in the review queue"
+            : "was added to the review queue"}
           <button
             type="button"
             className="queue-mail-banner-dismiss"
             aria-label="Dismiss"
-            onClick={() => setMailBannerCompany(null)}
+            onClick={() => setMailBanner(null)}
           >
             ×
           </button>

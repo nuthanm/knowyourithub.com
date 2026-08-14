@@ -19,7 +19,7 @@ type SubmitOptions<T extends ZodType> = {
   schema: T;
   buildAdmin: (input: z.infer<T> & { id: string }) => { subject: string; text: string; html: string };
   buildUser: (input: z.infer<T> & { id: string }) => { subject: string; text: string; html: string };
-  save: (input: z.infer<T> & { id: string }) => Promise<{ stored: boolean }>;
+  save: (input: z.infer<T> & { id: string }) => Promise<{ stored: boolean; duplicate?: boolean }>;
   requireStorage?: boolean;
 };
 
@@ -102,6 +102,10 @@ export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions
     );
   }
 
+  if (stored.duplicate) {
+    return jsonResponse({ ok: true, id, duplicate: true }, options.request);
+  }
+
   const hasSubscriberOptIn =
     typeof (record as Record<string, unknown>).subscribeToUpdates === "boolean" &&
     Boolean((record as Record<string, unknown>).subscribeToUpdates);
@@ -141,7 +145,7 @@ export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions
     }
   }
 
-  return jsonResponse({ ok: true, id }, options.request);
+  return jsonResponse({ ok: true, id, duplicate: Boolean(stored.duplicate) }, options.request);
 }
 
 export async function handleSubmissionPost(request: Request) {
@@ -153,8 +157,8 @@ export async function handleSubmissionPost(request: Request) {
     buildUser: buildUserConfirmationEmail,
     save: async (input) => {
       const result = await enqueueSubmissionFromMail(input);
-      return { stored: result.stored };
+      return { stored: result.stored, duplicate: result.duplicate };
     },
-    requireStorage: false,
+    requireStorage: true,
   });
 }
