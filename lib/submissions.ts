@@ -82,11 +82,6 @@ function getCompanyAliasKeys(name: string, slug: string, website?: string) {
 }
 
 const VERIFIED_SLUGS = new Set(VERIFIED_COMPANIES.map((company) => company.slug));
-const CATALOG_COMPANY_KEYS = new Set(
-  VERIFIED_COMPANIES.flatMap((company) =>
-    [...getCompanyAliasKeys(company.name, company.slug, company.website)]
-  ),
-);
 
 const ACTIVE_QUEUE_STATUSES: SubmissionQueueStatus[] = ["awaiting_review", "in_progress"];
 
@@ -330,12 +325,7 @@ export async function listQueueSubmissions() {
 
   const seen = new Set<string>();
   const merged = [...dbItems, ...jsonItems].filter((item) => {
-    const itemKeys = getCompanyAliasKeys(item.name, item.slug, item.website);
-    const matchesCatalog = [...itemKeys].some((key) => CATALOG_COMPANY_KEYS.has(key));
-
     if (!item.slug || item.slug === "unknown") return false;
-    if (VERIFIED_SLUGS.has(item.slug)) return false;
-    if (matchesCatalog) return false;
     if (
       item.requestType === "edit" &&
       !STATIC_PIPELINE_SLUGS.has(item.slug) &&
@@ -343,9 +333,8 @@ export async function listQueueSubmissions() {
     ) {
       return false;
     }
-    if (STATIC_PIPELINE_SLUGS.has(item.slug)) return false;
-    if (seen.has(item.slug)) return false;
-    seen.add(item.slug);
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
     return true;
   });
 
@@ -391,7 +380,7 @@ export async function updateSubmissionQueueStatus(input: {
     const effectiveName = input.companyName?.trim() || found.name;
     const effectiveWebsite = found.website;
 
-    if (input.status === "in_progress") {
+    if (input.status === "in_progress" && !VERIFIED_SLUGS.has(effectiveSlug)) {
       await upsertInProgressCatalogDraft({
         slug: effectiveSlug,
         name: effectiveName,
@@ -471,7 +460,7 @@ export async function updateSubmissionQueueStatus(input: {
   const effectiveSlug = resolvedSlug || slugifyCompanyName(row.company_name);
   const effectiveName = input.companyName?.trim() || row.company_name;
 
-  if (nextStatus === "in_progress") {
+  if (nextStatus === "in_progress" && !VERIFIED_SLUGS.has(effectiveSlug)) {
     await upsertInProgressCatalogDraft({
       slug: effectiveSlug,
       name: effectiveName,
