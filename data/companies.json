@@ -40986,8 +40986,90 @@
           "url": "https://www.zucisystems.com/careers/work-at-zuci/"
         }
       ]
+    },
+    {
+      "slug": "soliton",
+      "name": "Soliton Technologies",
+      "category": "hybrid",
+      "tagline": "Automation and AI solutions for engineering validation",
+      "description": "Soliton Technologies provides software engineering services and automation solutions for test and measurement, post-silicon validation, and engineering workflows. It also develops TestOps, a framework-based platform for semiconductor validation.",
+      "website": "https://www.solitontech.com/",
+      "founded": "1998",
+      "hq": "Coimbatore, India",
+      "officeCities": [
+        "Bengaluru",
+        "Coimbatore"
+      ],
+      "officeCountries": [
+        "India",
+        "United States"
+      ],
+      "contactUrl": "https://www.solitontech.com/contact",
+      "headcountGlobal": "350+",
+      "headcountNote": "350+ hand-picked engineers per Soliton's official website.",
+      "domains": [
+        "Test and measurement automation",
+        "Semiconductor validation",
+        "Engineering software"
+      ],
+      "tags": [
+        "India-based",
+        "Global delivery"
+      ],
+      "products": [
+        "TestOps",
+        "Protocol Validation Suite",
+        "MAVIS"
+      ],
+      "services": [
+        "Test, Measurement and Control Automation",
+        "Workflow Automation and Data Engineering",
+        "Generative AI in Engineering Workflows",
+        "Forward Deployed Engineering"
+      ],
+      "careersUrl": "https://www.solitontech.com/careers",
+      "linkedin": "https://www.linkedin.com/company/solitontechnologies/",
+      "leadership": [
+        {
+          "name": "Ganesh Devaraj",
+          "role": "Founder & Executive Chairman"
+        },
+        {
+          "name": "Mekhala Devaraj",
+          "role": "Co-Founder & Executive Director"
+        },
+        {
+          "name": "Arjun Sathiyaseelan",
+          "role": "CEO & Executive Director"
+        }
+      ],
+      "vision": "Enable every engineer to work to their heart's content and move humanity forward.",
+      "lastVerified": "2026-08-20",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Company overview",
+          "url": "https://www.solitontech.com/about"
+        },
+        {
+          "label": "Leadership team",
+          "url": "https://www.solitontech.com/leadership-team"
+        },
+        {
+          "label": "Careers",
+          "url": "https://www.solitontech.com/careers"
+        },
+        {
+          "label": "Contact and office locations",
+          "url": "https://www.solitontech.com/contact"
+        },
+        {
+          "label": "TestOps",
+          "url": "https://www.solitontech.com/testops"
+        }
+      ]
     }
   ],
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
-  "catalogUpdated": "2026-08-07"
+  "catalogUpdated": "2026-08-20"
 }
