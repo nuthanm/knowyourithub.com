@@ -14,3 +14,11 @@ CREATE INDEX IF NOT EXISTS company_profiles_verification_status_idx
 
 CREATE INDEX IF NOT EXISTS company_profiles_name_idx
   ON company_profiles (name);
+
+CREATE TABLE IF NOT EXISTS company_catalog_metadata (
+  id BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (id),
+  data_year INTEGER NOT NULL,
+  catalog_updated TEXT NOT NULL,
+  disclaimer TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

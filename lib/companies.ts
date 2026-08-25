@@ -1,4 +1,5 @@
-import catalog from "@/data/companies.json";
+import catalog from "@/data/catalog.generated.json";
+import pendingCatalog from "@/data/companies.json";
 import pipeline from "@/data/pipeline.json";
 import {
   companyProfileToEntry,
@@ -216,7 +217,13 @@ export const DATA_YEAR = catalog.dataYear;
 export const CATALOG_UPDATED = catalog.catalogUpdated;
 export const CATALOG_DISCLAIMER = catalog.disclaimer;
 
-export const COMPANIES: CompanyProfile[] = catalog.companies as CompanyProfile[];
+const catalogCompanies = catalog.companies as CompanyProfile[];
+const catalogSlugs = new Set(catalogCompanies.map((company) => company.slug));
+const pendingCompanies = (pendingCatalog.companies as CompanyProfile[]).filter(
+  (company) => !catalogSlugs.has(company.slug),
+);
+
+export const COMPANIES: CompanyProfile[] = [...catalogCompanies, ...pendingCompanies];
 
 function companyToPipelineItem(company: CompanyProfile): PipelineItem {
   return {
@@ -255,14 +262,14 @@ function countByCategory(list: CompanyProfile[]) {
 
 export const VERIFIED_COMPANIES = COMPANIES.filter((c) => c.verificationStatus === "verified");
 
-const catalogSlugs = new Set(COMPANIES.map((c) => c.slug));
+const allCatalogSlugs = new Set(COMPANIES.map((c) => c.slug));
 
 export const ALL_SEARCH_ENTRIES: CompanySearchEntry[] = [
   ...COMPANIES.map(companyProfileToEntry),
-  ...PIPELINE_IN_PROGRESS.filter((item) => !catalogSlugs.has(item.slug)).map((item) =>
+  ...PIPELINE_IN_PROGRESS.filter((item) => !allCatalogSlugs.has(item.slug)).map((item) =>
     pipelineToEntry(item, "in_progress"),
   ),
-  ...PIPELINE_UNVERIFIED.filter((item) => !catalogSlugs.has(item.slug)).map((item) =>
+  ...PIPELINE_UNVERIFIED.filter((item) => !allCatalogSlugs.has(item.slug)).map((item) =>
     pipelineToEntry(item, "unverified"),
   ),
 ];

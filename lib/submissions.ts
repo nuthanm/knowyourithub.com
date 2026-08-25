@@ -277,6 +277,29 @@ async function findActiveQueueSubmission(item: QueueSubmissionItem) {
   );
 }
 
+async function reconcileCatalogQueueDraftStatuses() {
+  const db = getSql();
+  if (!db) return;
+
+  const { readCatalogQueueDrafts } = await import("@/lib/catalog-drafts");
+  const drafts = await readCatalogQueueDrafts();
+  for (const draft of drafts) {
+    const slug = draft.slug.trim();
+    if (!slug) continue;
+
+    const status: SubmissionQueueStatus = draft.verificationStatus === "in_progress"
+      ? "in_progress"
+      : "awaiting_review";
+    await db`
+      UPDATE company_submissions
+      SET status = ${status}, updated_at = NOW()
+      WHERE LOWER(company_slug) = LOWER(${slug})
+        AND status IN ('awaiting_review', 'in_progress')
+        AND status <> ${status}
+    `;
+  }
+}
+
 export async function enqueueSubmissionFromMail(
   input: SubmissionInput & { id: string },
 ): Promise<{
@@ -340,9 +363,16 @@ export async function enqueueSubmissionFromMail(
   const dbResult = await saveSubmission(input);
   const { upsertPendingQueueJson } = await import("@/lib/pending-queue-store");
   const jsonResult = await upsertPendingQueueJson(item);
+  const { upsertCatalogQueueDraft } = await import("@/lib/catalog-drafts");
+  const catalogResult = await upsertCatalogQueueDraft({
+    slug: item.slug,
+    name: item.name,
+    website: item.website,
+    status: "unverified",
+  });
 
   return {
-    stored: dbResult.stored || jsonResult.stored,
+    stored: dbResult.stored || jsonResult.stored || catalogResult.updated,
     duplicate: false,
     alreadyInCatalog: false,
     item,
@@ -354,6 +384,7 @@ export async function listQueueSubmissions() {
   const dbItems: QueueSubmissionItem[] = [];
 
   if (db) {
+    await reconcileCatalogQueueDraftStatuses();
     const rows = await db<
       Array<{
         id: string;
@@ -448,18 +479,19 @@ export async function updateSubmissionQueueStatus(input: {
       });
     }
 
-    const { removeCatalogDraftBySlug, upsertInProgressCatalogDraft } = await import(
+    const { removeCatalogDraftBySlug, upsertCatalogQueueDraft } = await import(
       "@/lib/catalog-drafts"
     );
     const effectiveSlug = input.companySlug?.trim() || found.slug;
     const effectiveName = input.companyName?.trim() || found.name;
     const effectiveWebsite = found.website;
 
-    if (input.status === "in_progress" && !VERIFIED_SLUGS.has(effectiveSlug)) {
-      await upsertInProgressCatalogDraft({
+    if (ACTIVE_QUEUE_STATUSES.includes(input.status) && !VERIFIED_SLUGS.has(effectiveSlug)) {
+      await upsertCatalogQueueDraft({
         slug: effectiveSlug,
         name: effectiveName,
         website: effectiveWebsite,
+        status: input.status === "in_progress" ? "in_progress" : "unverified",
       });
     } else {
       await removeCatalogDraftBySlug(effectiveSlug);
@@ -531,16 +563,17 @@ export async function updateSubmissionQueueStatus(input: {
     });
   }
 
-  const { removeCatalogDraftBySlug, upsertInProgressCatalogDraft } = await import(
+  const { removeCatalogDraftBySlug, upsertCatalogQueueDraft } = await import(
     "@/lib/catalog-drafts"
   );
   const effectiveSlug = resolvedSlug || slugifyCompanyName(row.company_name);
   const effectiveName = input.companyName?.trim() || row.company_name;
 
-  if (nextStatus === "in_progress" && !VERIFIED_SLUGS.has(effectiveSlug)) {
-    await upsertInProgressCatalogDraft({
+  if (ACTIVE_QUEUE_STATUSES.includes(nextStatus) && !VERIFIED_SLUGS.has(effectiveSlug)) {
+    await upsertCatalogQueueDraft({
       slug: effectiveSlug,
       name: effectiveName,
+      status: nextStatus === "in_progress" ? "in_progress" : "unverified",
     });
   } else {
     await removeCatalogDraftBySlug(effectiveSlug);

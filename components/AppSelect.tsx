@@ -64,6 +64,7 @@ export function AppSelect({
   return (
     <Select<AppSelectOption, false>
       inputId={inputId}
+      instanceId={inputId}
       aria-label={ariaLabel}
       className={className}
       classNamePrefix="app-select"

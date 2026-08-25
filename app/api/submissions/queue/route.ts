@@ -1,7 +1,6 @@
 import { jsonResponse, corsPreflightResponse } from "@/lib/api/cors";
 import { verifyMailBannerToken } from "@/lib/security/queue-token";
-import { isDatabaseConfigured, listQueueSubmissions } from "@/lib/submissions";
-import { isPendingJsonConfigured } from "@/lib/pending-queue-store";
+import { listQueueSubmissions } from "@/lib/submissions";
 
 export async function OPTIONS(request: Request) {
   return corsPreflightResponse(request);
@@ -33,10 +32,6 @@ export async function GET(request: Request) {
       request,
       noStore,
     );
-  }
-
-  if (!isDatabaseConfigured() && !isPendingJsonConfigured()) {
-    return jsonResponse({ ok: true, items: [] }, request, noStore);
   }
 
   try {

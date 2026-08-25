@@ -583,6 +583,7 @@ export function PipelineQueue() {
           <label className="filter-select-wrap">
             <span className="filter-select-label">Status</span>
             <AppSelect
+              inputId="review-queue-status"
               ariaLabel="Filter by status"
               value={status}
               onChange={(nextValue) => updateStatus(nextValue as VerificationStatus | "all")}
@@ -594,6 +595,7 @@ export function PipelineQueue() {
           <label className="filter-select-wrap">
             <span className="filter-select-label">Type</span>
             <AppSelect
+              inputId="review-queue-category"
               ariaLabel="Filter by company type"
               value={category}
               onChange={(nextValue) => updateCategory(nextValue as CompanyCategory | "all")}

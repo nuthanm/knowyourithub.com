@@ -57,7 +57,9 @@ Core goal:
 
 ### Storage
 
-- data/companies.json as primary catalog source
+- PostgreSQL `company_profiles`, with one row per catalog company
+- data/catalog.generated.json as the build-time catalog cache pulled from PostgreSQL
+- data/companies.json for active portal submissions only (`awaiting_review` / `in_progress`)
 - Optional PostgreSQL storage for submissions
 - Local JSON-backed queue fallback for development; production review queues require PostgreSQL or Upstash Redis
 - Optional PostgreSQL snapshots for catalog distribution to keep repo data private
@@ -68,7 +70,7 @@ Core goal:
 flowchart TB
   subgraph Frontend["Web App"]
     UI["Next.js App Router pages"]
-    DATA["Catalog read: data/companies.json"]
+    DATA["Catalog read: data/catalog.generated.json"]
   end
 
   subgraph APIs["Form and Queue APIs"]
@@ -159,7 +161,10 @@ No-login moderation from UI:
 
 ## Company Data Process
 
-The current catalog is maintained in data/companies.json.
+The canonical catalog is stored as one row per company in PostgreSQL `company_profiles`.
+`data/catalog.generated.json` is the build-time cache reconstructed from those rows.
+`data/companies.json` is intentionally small: it contains only active portal submissions that are
+awaiting review or in progress.
 
 Typical workflow:
 
@@ -197,6 +202,7 @@ Open http://localhost:3000
 
 Catalog sync commands:
 
+- npm run catalog:migrate-to-rows (one-time, backup-first migration from the legacy catalog)
 - npm run catalog:push-db
 - npm run catalog:pull-db
 - npm run catalog:pull-db:required
@@ -206,11 +212,11 @@ Build behavior:
 
 - npm run build runs prebuild automatically.
 - prebuild executes catalog pull from DB when DATABASE_URL is configured.
-- If DB is not configured or snapshot table is missing, pull is skipped (non-breaking).
-- If data/companies.json is missing, prebuild auto-creates it from data/companies.example.json.
-- If CATALOG_DB_REQUIRED=1, build fails when DB snapshot pull cannot complete.
+- If DB is not configured or `company_profiles` is missing, pull is skipped (non-breaking).
+- If data/catalog.generated.json is missing, prebuild auto-creates it from data/companies.example.json.
+- If CATALOG_DB_REQUIRED=1, build fails when the row-based catalog pull cannot complete.
 
-Catalog snapshot schema:
+Catalog row schema:
 
 - db/catalog.sql
 - db/companies.sql
@@ -236,7 +242,7 @@ If your catalog must stay private, use this approach:
 
 Current repository note:
 
-- This codebase currently reads from data/companies.json.
+- This codebase reads verified profiles from data/catalog.generated.json and active review entries from data/companies.json.
 - To fully hide catalog content from public viewers, you must stop tracking sensitive data files and publish only sanitized data.
 
 ### Zero-Downtime rollout (recommended)

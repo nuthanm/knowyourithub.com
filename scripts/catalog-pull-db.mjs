@@ -16,7 +16,7 @@ const pullOnBuild = ["1", "true", "yes"].includes(
 
 const dbUrl = process.env.DATABASE_URL?.trim();
 const root = process.cwd();
-const outPath = resolve(root, "data", "companies.json");
+const outPath = resolve(root, "data", "catalog.generated.json");
 const samplePath = resolve(root, "data", "companies.example.json");
 
 function isUsableDbUrl(url) {
@@ -85,15 +85,12 @@ const sql = postgres(dbUrl, { max: 1, prepare: false });
 try {
   const rows = await sql`
     SELECT payload
-    FROM company_catalog_snapshots
-    WHERE is_active = TRUE
-    ORDER BY updated_at DESC, created_at DESC
-    LIMIT 1
+    FROM company_profiles
+    ORDER BY name ASC, slug ASC
   `;
 
-  const payload = rows[0]?.payload;
-  if (!payload) {
-    const message = "No active catalog snapshot found in DB. Skipping write.";
+  if (!rows.length) {
+    const message = "No company profile rows found in DB. Skipping write.";
     if (required) {
       console.error(message);
       process.exit(1);
@@ -103,14 +100,33 @@ try {
     process.exit(0);
   }
 
+  let metadata = {};
+  try {
+    const metadataRows = await sql`
+      SELECT data_year, catalog_updated, disclaimer
+      FROM company_catalog_metadata
+      WHERE id = TRUE
+      LIMIT 1
+    `;
+    metadata = metadataRows[0] ?? {};
+  } catch (error) {
+    if (error && typeof error === "object" && error.code !== "42P01") throw error;
+  }
+
+  const payload = {
+    dataYear: metadata.data_year ?? new Date().getUTCFullYear(),
+    catalogUpdated: metadata.catalog_updated ?? new Date().toISOString().slice(0, 10),
+    disclaimer: metadata.disclaimer ?? "Company profiles are maintained and verified by Know Your IT Hub.",
+    companies: rows.map((row) => row.payload),
+  };
   assertCatalogShape(payload);
   await mkdir(dirname(outPath), { recursive: true });
   await writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  console.log(`Catalog pulled from DB into ${outPath}`);
+  console.log(`Catalog pulled from ${rows.length} DB rows into ${outPath}`);
 } catch (error) {
   const code = error && typeof error === "object" ? error.code : undefined;
   if (code === "42P01") {
-    const message = "company_catalog_snapshots table is missing. Skipping DB catalog pull.";
+    const message = "company_profiles table is missing. Skipping DB catalog pull.";
     if (required) {
       console.error(message);
       process.exit(1);

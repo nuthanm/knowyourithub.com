@@ -12,7 +12,7 @@ if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
   process.exit(0);
 }
 
-const catalogPath = resolve(process.cwd(), "data", "companies.json");
+const catalogPath = resolve(process.cwd(), "data", "catalog.generated.json");
 const pipelinePath = resolve(process.cwd(), "data", "pipeline.json");
 
 function normalizeStatus(value) {
@@ -50,12 +50,12 @@ function isValidEmail(value) {
 const raw = await readFile(catalogPath, "utf8");
 const catalog = JSON.parse(raw);
 if (!catalog || !Array.isArray(catalog.companies)) {
-  throw new Error("data/companies.json must contain companies[]");
+  throw new Error("data/catalog.generated.json must contain companies[]");
 }
 
 const companies = catalog.companies;
 if (companies.length === 0) {
-  console.log("data/companies.json has no companies. Skipping sync.");
+  console.log("data/catalog.generated.json has no companies. Skipping sync.");
   process.exit(0);
 }
 

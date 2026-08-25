@@ -10,18 +10,24 @@ type CatalogFile = {
 };
 
 const CATALOG_PATH = resolve(process.cwd(), "data", "companies.json");
+type QueueProfileStatus = "unverified" | "in_progress";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function buildInProgressDraft(input: { slug: string; name: string; website?: string }): CompanyProfile {
+function buildQueueDraft(input: {
+  slug: string;
+  name: string;
+  website?: string;
+  status: QueueProfileStatus;
+}): CompanyProfile {
   const website = input.website?.trim() || `https://${input.slug}.com`;
   return {
     slug: input.slug,
     name: input.name,
     category: "unknown",
-    tagline: "Profile is under verification",
+    tagline: input.status === "in_progress" ? "Profile is under verification" : "Profile is awaiting review",
     description:
       "This company profile is currently in progress. We validate details against official sources before marking it verified.",
     website,
@@ -36,17 +42,29 @@ function buildInProgressDraft(input: { slug: string; name: string; website?: str
       },
     ],
     lastVerified: todayIso(),
-    verificationStatus: "in_progress",
+    verificationStatus: input.status,
   };
 }
 
 async function readCatalog(): Promise<CatalogFile | null> {
   try {
     const raw = await readFile(CATALOG_PATH, "utf8");
-    return JSON.parse(raw) as CatalogFile;
+    const catalog = JSON.parse(raw) as CatalogFile;
+    if (!Array.isArray(catalog.companies)) return null;
+    // Do not accidentally overwrite the pre-migration catalog with queue records.
+    if (catalog.companies.some((company) => company.verificationStatus === "verified")) return null;
+    return catalog;
   } catch {
     return null;
   }
+}
+
+export async function readCatalogQueueDrafts() {
+  const catalog = await readCatalog();
+  if (!catalog) return [];
+  return catalog.companies.filter(
+    (company) => company.verificationStatus === "unverified" || company.verificationStatus === "in_progress",
+  );
 }
 
 async function writeCatalog(catalog: CatalogFile) {
@@ -54,7 +72,12 @@ async function writeCatalog(catalog: CatalogFile) {
   await writeFile(CATALOG_PATH, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
 }
 
-export async function upsertInProgressCatalogDraft(input: { slug: string; name: string; website?: string }) {
+export async function upsertCatalogQueueDraft(input: {
+  slug: string;
+  name: string;
+  website?: string;
+  status: QueueProfileStatus;
+}) {
   const catalog = await readCatalog();
   if (!catalog) return { updated: false as const };
 
@@ -67,12 +90,12 @@ export async function upsertInProgressCatalogDraft(input: { slug: string; name: 
       ...existing,
       name: input.name || existing.name,
       website: input.website?.trim() || existing.website,
-      verificationStatus: "in_progress",
+      verificationStatus: input.status,
       lastVerified: now,
     };
     catalog.companies[index] = next;
   } else {
-    catalog.companies.push(buildInProgressDraft(input));
+    catalog.companies.push(buildQueueDraft(input));
   }
 
   catalog.catalogUpdated = now;
