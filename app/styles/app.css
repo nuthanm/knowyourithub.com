@@ -1987,7 +1987,7 @@ a.pipeline-stat-link:hover {
 }
 
 .pipeline-grid-wrap {
-  overflow-x: auto;
+  overflow-x: clip;
   border-radius: 14px;
   border: 1px solid var(--cream-2);
   background: var(--white);
@@ -1996,7 +1996,8 @@ a.pipeline-stat-link:hover {
 
 .pipeline-grid {
   width: 100%;
-  min-width: 640px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -2048,13 +2049,19 @@ a.pipeline-stat-link:hover {
   text-decoration: none;
 }
 
+.pipeline-grid-name {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .pipeline-grid-name a:hover {
   color: var(--profit);
 }
 
 .pipeline-community-badge {
   display: inline-block;
-  margin-left: 8px;
+  width: fit-content;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 10px;
@@ -2066,10 +2073,11 @@ a.pipeline-stat-link:hover {
 }
 
 .pipeline-grid-note {
-  max-width: 22rem;
+  max-width: none;
   font-size: 12px;
   line-height: 1.45;
   color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
 .pipeline-grid-muted {
@@ -2077,28 +2085,59 @@ a.pipeline-stat-link:hover {
 }
 
 .pipeline-grid-action {
-  width: 13rem;
-  white-space: nowrap;
-  text-align: right;
+  width: auto;
+  white-space: normal;
+  text-align: left;
 }
 
 .pipeline-grid-actions,
 .pipeline-moderation-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 
 .pipeline-grid-actions > .catalog-pipeline-action,
 .pipeline-moderation-actions > .catalog-pipeline-action {
-  width: 100%;
+  width: auto;
   min-height: 2rem;
   justify-content: center;
   margin-top: 0;
 }
 
 .pipeline-grid-actions > .pipeline-moderation-actions {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
+}
+
+.pipeline-grid th:nth-child(2),
+.pipeline-grid td:nth-child(2) {
+  width: 8.5rem;
+}
+
+.pipeline-grid th:nth-child(3),
+.pipeline-grid td:nth-child(3) {
+  width: 9rem;
+}
+
+.pipeline-grid th:nth-child(5),
+.pipeline-grid td:nth-child(5) {
+  width: clamp(12rem, 24vw, 16rem);
+}
+
+@media (max-width: 900px) {
+  .pipeline-grid th,
+  .pipeline-grid td {
+    padding: 0.6rem 0.65rem;
+  }
+
+  .pipeline-grid th:nth-child(2),
+  .pipeline-grid td:nth-child(2),
+  .pipeline-grid th:nth-child(3),
+  .pipeline-grid td:nth-child(3),
+  .pipeline-grid th:nth-child(5),
+  .pipeline-grid td:nth-child(5) {
+    width: auto;
+  }
 }
 
 .pipeline-grid-empty {

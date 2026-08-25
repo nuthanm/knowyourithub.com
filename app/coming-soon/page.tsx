@@ -13,8 +13,8 @@ export default function ComingSoonPage() {
   const totalInQueue = CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified;
 
   return (
-    <AppShell active="queue">
-      <div className="page-narrow coming-soon-page">
+    <AppShell active="queue" wide>
+      <div className="coming-soon-page">
         <FormPageHeader
           eyebrow="Transparency"
           title="Review queue"
