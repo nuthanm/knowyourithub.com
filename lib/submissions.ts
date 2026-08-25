@@ -17,6 +17,7 @@ import {
 } from "./submissions-shared";
 import { listSubscribers } from "./subscribers";
 import type { SubmissionInput } from "./validators";
+import { getQueueStageNotificationTarget } from "./email-templates";
 
 let sql: ReturnType<typeof postgres> | null = null;
 
@@ -144,13 +145,16 @@ async function notifySubscribersOnQueueStageChange(params: {
   companyName: string;
   companySlug?: string;
   stage: Exclude<SubmissionQueueStatus, "rejected">;
+  submitterEmail?: string;
+  submitterName?: string;
 }): Promise<SubscriberNotificationResult> {
   try {
     if (!isMailerConfigured()) {
       return { configured: false, recipients: 0, delivered: 0, failed: 0 };
     }
-    const subscribers = await listSubscribers(300);
-    if (!subscribers.length) {
+
+    const target = getQueueStageNotificationTarget(params.stage, params.submitterEmail);
+    if (target.mode === "none") {
       return { configured: true, recipients: 0, delivered: 0, failed: 0 };
     }
 
@@ -159,6 +163,24 @@ async function notifySubscribersOnQueueStageChange(params: {
       companySlug: params.companySlug,
       stage: params.stage,
     });
+
+    if (target.mode === "submitter") {
+      const recipient = target.recipients[0];
+      if (!recipient) {
+        return { configured: true, recipients: 0, delivered: 0, failed: 0 };
+      }
+      try {
+        await sendMail({ to: recipient, ...mail });
+        return { configured: true, recipients: 1, delivered: 1, failed: 0 };
+      } catch {
+        return { configured: true, recipients: 1, delivered: 0, failed: 1 };
+      }
+    }
+
+    const subscribers = await listSubscribers(300);
+    if (!subscribers.length) {
+      return { configured: true, recipients: 0, delivered: 0, failed: 0 };
+    }
 
     const recipients = subscribers
       .map((subscriber) => subscriber.email?.trim())
@@ -314,6 +336,8 @@ export async function enqueueSubmissionFromMail(
     id: input.id,
     slug,
     name: input.companyName.trim(),
+    submitterName: input.submitterName?.trim() || undefined,
+    submitterEmail: input.submitterEmail?.trim() || undefined,
     requestType: input.requestType,
     queueStatus: "awaiting_review",
     note: buildQueueNote(input),
@@ -502,6 +526,8 @@ export async function updateSubmissionQueueStatus(input: {
         companyName: effectiveName,
         companySlug: effectiveSlug,
         stage: input.status,
+        submitterEmail: found.submitterEmail,
+        submitterName: found.submitterName,
       })
       : undefined;
 
@@ -584,6 +610,8 @@ export async function updateSubmissionQueueStatus(input: {
       companyName: effectiveName,
       companySlug: effectiveSlug,
       stage: nextStatus,
+      submitterEmail: row.submitter_email,
+      submitterName: row.submitter_name,
     })
     : undefined;
   const requesterNotification = changed && nextStatus === "rejected"

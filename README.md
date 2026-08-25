@@ -107,51 +107,123 @@ flowchart TB
   QUEUE --> JSONQ
 ```
 
-## Verification and Intake Workflow
+## Behaviour flow
 
-### 1) How companies are verified
+### Flow 1 — submit and queue a request
 
-- Primary sources are required (official website, careers page, official location pages, or other authoritative references).
-- A profile is considered verified only after manual maintainer review.
-- Fields that cannot be validated are omitted or marked carefully.
-- Verification metadata includes lastVerified and sources.
+Files involved:
+- [app/api/submissions/route.ts](app/api/submissions/route.ts) or the submit handler entry point
+- [lib/api/submit-handler.ts](lib/api/submit-handler.ts)
+- [lib/submissions.ts](lib/submissions.ts)
+- [lib/pending-queue-store.ts](lib/pending-queue-store.ts)
+- [lib/subscribers.ts](lib/subscribers.ts)
+- [data/companies.json](data/companies.json)
 
-### 2) How companies are added to the review queue
+Behavior:
+- A visitor submits an add or edit request from the portal.
+- The request is validated, sanitized, and checked for duplicate or already-known companies.
+- The record is inserted into the review queue (`company_submissions`) with status `awaiting_review`.
+- The same request also appears in the local pending queue JSON fallback or the DB-backed queue.
+- The item is shown on the review page as awaiting review until a maintainer confirms the record.
+- If the submitter opts in, their email is stored in `catalog_subscribers` and they receive the welcome email.
 
-- Visitor submits add/edit request through the site.
-- Server validates schema, CAPTCHA, anti-bot signals, and sanitization.
-- Requests are stored in PostgreSQL or Upstash Redis in production. Local development uses a JSON fallback.
-- A second active request for the same company is reported as already queued instead of creating a duplicate.
-- Queue endpoint filters duplicates and items already covered in catalog/pipeline.
-- Maintainer reviews pending entries before publication.
+### Flow 2 — enrich and move to in progress
 
-Status lifecycle in queue:
+Files involved:
+- [lib/submissions.ts](lib/submissions.ts)
+- [lib/catalog-drafts.ts](lib/catalog-drafts.ts)
+- [lib/email-templates.ts](lib/email-templates.ts)
+- [app/api/submissions/queue/status/route.ts](app/api/submissions/queue/status/route.ts)
+- [data/companies.json](data/companies.json)
+- [data/catalog.generated.json](data/catalog.generated.json)
 
-- awaiting_review -> in_progress -> verified
-- rejected is available for requests that cannot be validated
+Behavior:
+- A maintainer opens the queue and updates the company record with verified details.
+- The queue status moves from `awaiting_review` to `in_progress`.
+- The code keeps the queue row active and syncs the draft record into the local queue/profile review file.
+- The profile stays in a pending state with `verificationStatus` set to `in_progress` until final verification is complete.
+- The notification email is sent only to the original submitter for `in_progress`, not to all subscribers.
+- This matches the handwritten flow from the note: it is a personal update to the submitter during verification.
 
-Status update API (admin only):
+### Flow 3 — verified company goes live
 
-- POST /api/submissions/queue/status
-- Requires ADMIN_API_KEY via Authorization Bearer token or x-admin-key header
-- Also supports secure no-login moderation via x-moderator-token (magic link token from admin email)
-- Sends subscriber stage updates for awaiting_review, in_progress, and verified
+Files involved:
+- [lib/submissions.ts](lib/submissions.ts)
+- [lib/email-templates.ts](lib/email-templates.ts)
+- [scripts/sync-companies-db.mjs](scripts/sync-companies-db.mjs)
+- [scripts/catalog-push-db.mjs](scripts/catalog-push-db.mjs)
+- [scripts/catalog-pull-db.mjs](scripts/catalog-pull-db.mjs)
+- [data/catalog.generated.json](data/catalog.generated.json)
+- [data/companies.json](data/companies.json)
 
-No-login moderation from UI:
+Behavior:
+- Once approval is complete, the queue item is set to `verified`.
+- The verified company is removed from the review queue and added to the published catalog.
+- The canonical profile is kept in PostgreSQL `company_profiles` and mirrored into the generated catalog used by the website.
+- A broadcast email is sent to all active subscribers for the verified company update.
+- The URL should resolve to the final company details route such as `/companies/<slug>`.
 
-- Admin email includes "Open moderation console (no login)"
-- Opens /coming-soon?moderate=<signed-token>
-- Queue rows show status action buttons directly in UI
+### Status mapping used by the project
 
-### 3) How submit and feedback work
+This project intentionally separates queue status from catalog profile status:
 
-- Submit form: add/edit requests for company data.
-- Feedback form: quality and usefulness feedback for the platform.
-- Contact form: direct contact messages.
-- Admin receives notification emails; user receives confirmation when email is provided.
-- If a submitter opts in for updates, they are stored in catalog_subscribers and receive a welcome email.
+- Queue status: `awaiting_review`, `in_progress`, `verified`, `rejected`
+- Catalog/profile status: `unverified`, `in_progress`, `verified`
 
-### 4) Additional operational controls worth documenting
+The mapping is:
+
+- `awaiting_review` -> `unverified`
+- `in_progress` -> `in_progress`
+- `verified` -> `verified`
+
+This keeps the admin review queue clean while still allowing the public catalog to show a simple status model.
+
+### Current code alignment
+
+The code was previously broadcasting every non-rejected status update to all subscribers. That was not aligned with the handwritten flow.
+
+The logic has been corrected so that:
+
+- `in_progress` sends a mail only to the original submitter
+- `verified` sends a mail to all subscribers
+- `awaiting_review` does not broadcast to all subscribers
+
+The notification behavior is now aligned with the three flow stages described above.
+
+### Operational controls
+
+- Rate limiting for abuse prevention.
+- Honeypot/timing bot detection.
+- CAPTCHA challenge token verification.
+- Input sanitization and suspicious-character rejection.
+- CORS handling for cross-origin safety.
+
+This project intentionally separates queue status from catalog profile status:
+
+- Queue status: `awaiting_review`, `in_progress`, `verified`, `rejected`
+- Catalog/profile status: `unverified`, `in_progress`, `verified`
+
+The mapping is:
+
+- `awaiting_review` -> `unverified`
+- `in_progress` -> `in_progress`
+- `verified` -> `verified`
+
+This keeps the admin review queue clean while still allowing the public catalog to show a simple status model.
+
+### Current code alignment
+
+The code was previously broadcasting every non-rejected status update to all subscribers. That was not aligned with the handwritten flow.
+
+The logic has been corrected so that:
+
+- `in_progress` sends a mail only to the original submitter
+- `verified` sends a mail to all subscribers
+- `awaiting_review` does not broadcast to all subscribers
+
+The notification behavior is now aligned with the three flow stages described above.
+
+### Operational controls
 
 - Rate limiting for abuse prevention.
 - Honeypot/timing bot detection.
@@ -190,6 +262,49 @@ npm run dev
 
 Open http://localhost:3000
 
+### Local testing workflow
+
+1. Start the app locally:
+   ```bash
+   npm run dev
+   ```
+2. Open the submit form on `/submit` and create a company request.
+3. Confirm the submission is stored in the review queue and visible on `/coming-soon`.
+4. Update the queue status via the moderation console or API.
+5. Test the three stages:
+   - `awaiting_review` shows the item in the review queue
+   - `in_progress` sends a direct email to the submitter only
+   - `verified` pushes the company to the catalog and broadcasts to all subscribers
+6. Check the generated catalog and queue JSON files after each status change.
+
+### Local moderation API examples
+
+```bash
+curl -X POST http://localhost:3000/api/submissions/queue/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_API_KEY>" \
+  -d '{
+    "id": "<submission-id>",
+    "status": "in_progress",
+    "companyName": "Newgen Software",
+    "companySlug": "newgen-software"
+  }'
+```
+
+For a verified transition:
+
+```bash
+curl -X POST http://localhost:3000/api/submissions/queue/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ADMIN_API_KEY>" \
+  -d '{
+    "id": "<submission-id>",
+    "status": "verified",
+    "companyName": "Newgen Software",
+    "companySlug": "newgen-software"
+  }'
+```
+
 ## Environment and Deployment
 
 - Deploy target: Vercel
@@ -199,6 +314,87 @@ Open http://localhost:3000
 - Optional API hardening: ADMIN_API_KEY and CORS origins
 - Review queue moderation: set REVIEW_QUEUE_PASSCODE (or use ADMIN_API_KEY as its fallback)
 - Optional strict deployment gate: CATALOG_DB_REQUIRED=1
+
+## Local-to-DB sync and deployment sync
+
+### Local sync model
+
+The project uses two layers:
+
+1. Local JSON files for rapid local dev and fallback persistence
+2. PostgreSQL for durable catalog and queue state in production or when DATABASE_URL is configured
+
+The local files are:
+
+- `data/companies.json` — active queue/profile draft entries and pending review entries
+- `data/catalog.generated.json` — published catalog snapshot used by the app
+- `data/pending.json` — fallback queue used when DB is not available
+
+The DB tables are:
+
+- `company_submissions` — review queue rows
+- `company_profiles` — canonical, verified catalog rows
+- `catalog_subscribers` — subscriber email list
+- `company_catalog_metadata` — catalog snapshot metadata
+
+### How sync works
+
+#### Pull latest DB data into local files
+
+```bash
+npm run catalog:pull-db
+```
+
+This pulls the latest `company_profiles` rows into `data/catalog.generated.json`.
+
+If you want the build to fail when the DB catalog is missing, use:
+
+```bash
+CATALOG_DB_REQUIRED=1 npm run catalog:pull-db:required
+```
+
+#### Push local catalog to DB
+
+```bash
+npm run catalog:push-db
+```
+
+This writes the content from `data/catalog.generated.json` or the legacy `data/companies.json` file into PostgreSQL `company_profiles` and updates `company_catalog_metadata`.
+
+#### Sync the queue and catalog state after verification
+
+```bash
+npm run companies:sync-db
+```
+
+This syncs the verified catalog rows into `company_profiles` and marks matching submissions in `company_submissions` as `verified`.
+
+### After pushing changes to the repo
+
+1. Push the branch to GitHub.
+2. Deploy to Vercel.
+3. On deploy, the app runs `prebuild` which calls `scripts/catalog-pull-db.mjs --build`.
+4. If `DATABASE_URL` is configured and `CATALOG_PULL_ON_BUILD=true`, the build pulls the latest published catalog snapshot into `data/catalog.generated.json`.
+5. The deployed app reads the pull result and serves the latest verified profile data.
+
+This means the production app is consistently driven by the DB-backed catalog, while local dev can operate from the JSON fallback when the DB is missing or intentionally disabled.
+
+### Recommended local workflow for maintainers
+
+```bash
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Then:
+
+- submit a company from the UI
+- review it in the moderation queue
+- change the queue status from `awaiting_review` to `in_progress`
+- verify it as `verified`
+- run `npm run companies:sync-db` to ensure DB and catalog data remain in sync
+- push the branch and redeploy when you want the public site to pick up the latest catalog snapshot
 
 Catalog sync commands:
 

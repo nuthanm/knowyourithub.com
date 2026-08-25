@@ -212,6 +212,22 @@ export function buildUserConfirmationEmail(input: SubmissionInput & { id: string
   return { subject, text, html };
 }
 
+export function getQueueStageNotificationTarget(
+  stage: "awaiting_review" | "in_progress" | "verified",
+  submitterEmail?: string,
+) {
+  if (stage === "in_progress") {
+    const email = submitterEmail?.trim();
+    return email ? { mode: "submitter" as const, recipients: [email] } : { mode: "none" as const, recipients: [] };
+  }
+
+  if (stage === "verified") {
+    return { mode: "allSubscribers" as const, recipients: [] };
+  }
+
+  return { mode: "none" as const, recipients: [] };
+}
+
 export function buildSubmissionRejectedEmail(input: { companyName: string; submitterName: string }) {
   const subject = `Update on your ${SITE_NAME} request for ${input.companyName}`;
   const text = [

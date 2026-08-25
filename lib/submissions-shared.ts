@@ -4,6 +4,8 @@ export type QueueSubmissionItem = {
   id: string;
   slug: string;
   name: string;
+  submitterName?: string;
+  submitterEmail?: string;
   requestType: "add" | "edit";
   queueStatus: SubmissionQueueStatus;
   note: string;
