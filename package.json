@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/catalog-pull-db.mjs --build",
+    "prebuild": "node scripts/catalog-pull-db.mjs --build && node scripts/sync-review-queue-json.mjs",
     "build": "next build",
     "enrich:wikidata": "node scripts/enrich-wikidata.mjs",
     "catalog:push-db": "node scripts/catalog-push-db.mjs",
@@ -13,6 +13,7 @@
     "catalog:migrate-to-rows": "node scripts/migrate-catalog-to-rows.mjs",
     "submissions:migrate-verified": "node scripts/migrate-verified-submissions.mjs",
     "companies:sync-db": "node scripts/sync-companies-db.mjs",
+    "sync:workflow": "npm run submissions:migrate-verified && npm run companies:sync-db && npm run queue:sync-json && npm run catalog:pull-db && npm run public:sanitize-data",
     "public:sanitize-data": "node scripts/sanitize-public-data.mjs",
     "start": "next start",
     "lint": "eslint .",

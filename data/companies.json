@@ -4,70 +4,30 @@
   "disclaimer": "Active community submissions awaiting review or in progress.",
   "companies": [
     {
-      "slug": "newgen-software",
-      "name": "Newgen Software",
-      "category": "product",
-      "tagline": "Enterprise software for intelligent process orchestration and automation.",
-      "description": "Newgen Software orchestrates intelligent enterprises at scale with the NewgenONE platform, unifying content, workflows, and communications in a single enterprise operating layer. The platform helps organizations automate customer journeys, compliance-heavy operations, and decision-making with embedded AI and low-code capabilities.",
-      "website": "https://newgensoft.com/",
-      "hq": "New Delhi, India",
-      "officeCities": [
-        "New Delhi",
-        "Noida",
-        "Mumbai",
-        "Kolkata",
-        "Hyderabad",
-        "Bengaluru",
-        "Chennai"
-      ],
-      "officeCountries": [
-        "India",
-        "United States",
-        "Canada",
-        "United Kingdom",
-        "Saudi Arabia",
-        "United Arab Emirates",
-        "Singapore",
-        "Australia"
-      ],
-      "totalOfficeLocations": "20+ offices",
-      "locationsUrl": "https://newgensoft.com/contact/",
-      "contactUrl": "https://newgensoft.com/contact/",
+      "slug": "lxg-injection-molding",
+      "name": "LXG Injection Molding",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://lxginjectionmolding.com/",
+      "hq": "Unknown",
       "domains": [
-        "Enterprise Software",
-        "Low-Code",
-        "Process Automation",
-        "AI & Workflow"
+        "Unknown"
       ],
       "tags": [
-        "Global software company",
-        "Enterprise SaaS",
-        "AI-enabled"
+        "Community request"
       ],
-      "products": [
-        "NewgenONE",
-        "Content ORB",
-        "Process Orchestration",
-        "Omnichannel Customer Engagement"
+      "services": [
+        "Under review"
       ],
-      "linkedin": "https://www.linkedin.com/company/newgen",
-      "twitter": "https://www.twitter.com/newgensoftware",
-      "lastVerified": "2026-08-25",
-      "verificationStatus": "verified",
       "sources": [
         {
-          "label": "Company website",
-          "url": "https://newgensoft.com/"
-        },
-        {
-          "label": "About Newgen",
-          "url": "https://newgensoft.com/about-us"
-        },
-        {
-          "label": "Global offices",
-          "url": "https://newgensoft.com/contact/"
+          "label": "Community submission",
+          "url": "https://lxginjectionmolding.com/"
         }
-      ]
+      ],
+      "lastVerified": "2026-08-25",
+      "verificationStatus": "unverified"
     },
     {
       "slug": "affle-india",

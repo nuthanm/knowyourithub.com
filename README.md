@@ -421,9 +421,25 @@ Catalog row schema:
 Pull request database sync workflow:
 
 - GitHub Actions workflow: .github/workflows/companies-db-sync.yml
-- Triggers on pull requests that touch data/companies.json
-- Runs only when data/companies.json exists in the workspace
-- Syncs catalog rows into company_profiles and marks matching submissions as verified
+- Triggers on branch pushes and pull requests when sync-related files change (data, db, scripts, package.json)
+- Runs a single orchestration command: `npm run sync:workflow`
+- Sequence inside `sync:workflow`:
+  - `npm run submissions:migrate-verified`
+  - `npm run companies:sync-db`
+  - `npm run queue:sync-json`
+  - `npm run catalog:pull-db`
+  - `npm run public:sanitize-data`
+
+Required pipeline secrets/env for full DB-backed generation:
+
+- `DATABASE_URL` (required for DB sync/migration/pull)
+- `NEXT_PUBLIC_SITE_URL` (recommended for generated links)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (required only if email delivery is expected during sync)
+
+Notes:
+
+- If `DATABASE_URL` is missing, DB-dependent steps will fail or skip depending on script behavior.
+- `npm run build` still executes `prebuild`; that path now refreshes queue JSON and optionally pulls catalog from DB when `CATALOG_PULL_ON_BUILD=true`.
 
 ## Data Visibility and Private Catalog Guidance
 

@@ -4,12 +4,29 @@ permissions:
   contents: write
 
 on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - data/companies.json
+      - data/companies.example.json
+      - scripts/sync-companies-db.mjs
+      - scripts/sanitize-public-data.mjs
+      - scripts/migrate-verified-submissions.mjs
+      - scripts/sync-review-queue-json.mjs
+      - scripts/catalog-pull-db.mjs
+      - db/companies.sql
+      - db/submissions.sql
+      - package.json
   pull_request:
     paths:
       - data/companies.json
       - data/companies.example.json
       - scripts/sync-companies-db.mjs
       - scripts/sanitize-public-data.mjs
+      - scripts/migrate-verified-submissions.mjs
+      - scripts/sync-review-queue-json.mjs
+      - scripts/catalog-pull-db.mjs
       - db/companies.sql
       - db/submissions.sql
       - package.json
@@ -33,10 +50,8 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - name: Sync companies into DB and reconcile submission statuses
-        run: npm run companies:sync-db
-      - name: Sanitize public JSON data files
-        run: npm run public:sanitize-data
+      - name: Run full DB and generated-data sync workflow
+        run: npm run sync:workflow
       - name: Commit sanitized JSON files back to PR branch
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
