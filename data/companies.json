@@ -41128,6 +41128,59 @@
           "url": "https://www.solitontech.com/testops"
         }
       ]
+    },
+    {
+      "slug": "codem-inc",
+      "name": "Codem Inc",
+      "category": "hybrid",
+      "tagline": "Enterprise eCommerce solutions and global technology services",
+      "description": "Codem was started with the mission of creating globally scalable enterprise eCommerce applications. Led by eCommerce executives with 20+ years of experience, they provide custom software development, technology services, and AI-powered solutions.",
+      "website": "https://www.codem.com",
+      "founded": "2017",
+      "hq": "San Francisco, CA, USA",
+      "officeCities": ["Chennai", "Tirunelveli"],
+      "officeCountries": ["United States", "Singapore", "India"],
+      "totalOfficeLocations": "4 countries",
+      "locationsUrl": "https://www.codem.com/contact/",
+      "contactUrl": "https://www.codem.com/contact/",
+      "domains": ["eCommerce", "Software Development", "AI/ML", "Technology Services"],
+      "tags": ["Global Presence", "Cloud-focused", "24/7 Support"],
+      "services": [
+        "Technology Development",
+        "eCommerce Implementation",
+        "AI Proof-of-Concepts",
+        "Quality Assurance",
+        "DevOps & Cloud Scalability"
+      ],
+      "onsitePolicy": "Distributed/Hybrid — 24/7 support teams across US, Singapore, and India; verify on careers page",
+      "linkedin": "https://www.linkedin.com/company/codemtechnologies/",
+      "headcountNote": "100+ eCommerce professionals globally; specific India headcount not publicly available on official channels",
+      "leadership": [
+        {
+          "name": "Wolfgang Baier",
+          "role": "Board Member"
+        }
+      ],
+      "lastVerified": "2026-08-25",
+      "verificationStatus": "in_progress",
+      "sources": [
+        {
+          "label": "About page",
+          "url": "https://www.codem.com/about/"
+        },
+        {
+          "label": "Technology Development Services",
+          "url": "https://www.codem.com/services/technology-development/"
+        },
+        {
+          "label": "Contact & office locations",
+          "url": "https://www.codem.com/contact/"
+        },
+        {
+          "label": "LinkedIn Company",
+          "url": "https://www.linkedin.com/company/codemtechnologies/"
+        }
+      ]
     }
   ],
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
