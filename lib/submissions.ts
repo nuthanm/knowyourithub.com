@@ -1,13 +1,14 @@
 import postgres from "postgres";
 import {
   ALL_COMPANY_SLUGS,
+  COMPANIES,
   PIPELINE_IN_PROGRESS,
   PIPELINE_UNVERIFIED,
   slugifyCompanyName,
   VERIFIED_COMPANIES,
 } from "./companies";
 import { buildAdminEmail, buildUserConfirmationEmail } from "./email-templates";
-import { buildQueueStageBroadcastEmail } from "./email-templates";
+import { buildQueueStageBroadcastEmail, buildSubmissionRejectedEmail } from "./email-templates";
 import { isMailerConfigured, sendMail } from "./security/mailer";
 import {
   queueStatusToSearchStatus,
@@ -85,6 +86,8 @@ const VERIFIED_SLUGS = new Set(VERIFIED_COMPANIES.map((company) => company.slug)
 
 const ACTIVE_QUEUE_STATUSES: SubmissionQueueStatus[] = ["awaiting_review", "in_progress"];
 
+export type ExistingCompanyStatus = "verified" | "awaiting_review" | "in_progress";
+
 function mapDbSubmissionStatus(value?: string | null): SubmissionQueueStatus {
   if (value === "in_progress") return "in_progress";
   if (value === "verified") return "verified";
@@ -131,6 +134,12 @@ type SubscriberNotificationResult = {
   failed: number;
 };
 
+type RequesterNotificationResult = {
+  configured: boolean;
+  delivered: boolean;
+  failed: boolean;
+};
+
 async function notifySubscribersOnQueueStageChange(params: {
   companyName: string;
   companySlug?: string;
@@ -161,6 +170,27 @@ async function notifySubscribersOnQueueStageChange(params: {
   } catch {
     // Status changes must succeed even if subscriber lookup/mail delivery fails.
     return { configured: isMailerConfigured(), recipients: 0, delivered: 0, failed: 1 };
+  }
+}
+
+async function notifyRequesterOfRejectedSubmission(params: {
+  companyName: string;
+  submitterName: string;
+  submitterEmail: string;
+}): Promise<RequesterNotificationResult> {
+  if (!isMailerConfigured()) {
+    return { configured: false, delivered: false, failed: false };
+  }
+
+  try {
+    const mail = buildSubmissionRejectedEmail({
+      companyName: params.companyName,
+      submitterName: params.submitterName,
+    });
+    await sendMail({ to: params.submitterEmail, ...mail });
+    return { configured: true, delivered: true, failed: false };
+  } catch {
+    return { configured: true, delivered: false, failed: true };
   }
 }
 
@@ -249,7 +279,13 @@ async function findActiveQueueSubmission(item: QueueSubmissionItem) {
 
 export async function enqueueSubmissionFromMail(
   input: SubmissionInput & { id: string },
-): Promise<{ stored: boolean; duplicate: boolean; item: QueueSubmissionItem }> {
+): Promise<{
+  stored: boolean;
+  duplicate: boolean;
+  alreadyInCatalog: boolean;
+  existingStatus?: ExistingCompanyStatus;
+  item: QueueSubmissionItem;
+}> {
   const slug = resolveSubmissionSlug(input);
   const item: QueueSubmissionItem = {
     id: input.id,
@@ -262,16 +298,55 @@ export async function enqueueSubmissionFromMail(
     website: input.website?.trim() || undefined,
   };
 
+  const companyKey = normalizeCompanyKey(input.companyName);
+  const slugKey = normalizeCompanyKey(slug);
+  const catalogCompany = input.requestType === "add" && COMPANIES.find(
+    (company) =>
+      normalizeCompanyKey(company.name) === companyKey || normalizeCompanyKey(company.slug) === slugKey,
+  );
+  if (catalogCompany) {
+    const existingStatus = catalogCompany.verificationStatus === "verified"
+      ? "verified"
+      : catalogCompany.verificationStatus === "in_progress"
+        ? "in_progress"
+        : "awaiting_review";
+    return {
+      stored: true,
+      duplicate: true,
+      alreadyInCatalog: true,
+      existingStatus,
+      item: {
+        ...item,
+        name: catalogCompany.name,
+        slug: catalogCompany.slug,
+      },
+    };
+  }
+
   const existing = await findActiveQueueSubmission(item);
   if (existing) {
-    return { stored: true, duplicate: true, item: existing };
+    const existingStatus: ExistingCompanyStatus = existing.queueStatus === "in_progress"
+      ? "in_progress"
+      : "awaiting_review";
+    return {
+      stored: true,
+      duplicate: true,
+      alreadyInCatalog: false,
+      existingStatus,
+      item: existing,
+    };
   }
 
   const dbResult = await saveSubmission(input);
   const { upsertPendingQueueJson } = await import("@/lib/pending-queue-store");
   const jsonResult = await upsertPendingQueueJson(item);
 
-  return { stored: dbResult.stored || jsonResult.stored, duplicate: false, item };
+  return {
+    stored: dbResult.stored || jsonResult.stored,
+    duplicate: false,
+    alreadyInCatalog: false,
+    item,
+  };
 }
 
 export async function listQueueSubmissions() {
@@ -415,12 +490,14 @@ export async function updateSubmissionQueueStatus(input: {
       id: string;
       company_name: string;
       company_slug: string | null;
+      submitter_name: string;
+      submitter_email: string;
       status: string;
       previous_status: string;
     }>
   >`
     WITH target AS (
-      SELECT id, company_name, company_slug, status
+      SELECT id, company_name, company_slug, submitter_name, submitter_email, status
       FROM company_submissions
       WHERE id = ${input.id}
       LIMIT 1
@@ -429,7 +506,7 @@ export async function updateSubmissionQueueStatus(input: {
     SET status = ${input.status}, updated_at = NOW()
     FROM target
     WHERE submissions.id = target.id
-    RETURNING submissions.id, submissions.company_name, submissions.company_slug, submissions.status, target.status AS previous_status
+    RETURNING submissions.id, submissions.company_name, submissions.company_slug, submissions.submitter_name, submissions.submitter_email, submissions.status, target.status AS previous_status
   `;
 
   const row = rows[0];
@@ -476,6 +553,13 @@ export async function updateSubmissionQueueStatus(input: {
       stage: nextStatus,
     })
     : undefined;
+  const requesterNotification = changed && nextStatus === "rejected"
+    ? await notifyRequesterOfRejectedSubmission({
+      companyName: effectiveName,
+      submitterName: row.submitter_name,
+      submitterEmail: row.submitter_email,
+    })
+    : undefined;
 
   return {
     updated: true as const,
@@ -486,6 +570,7 @@ export async function updateSubmissionQueueStatus(input: {
     previousStatus,
     changed,
     subscriberNotification,
+    requesterNotification,
   };
 }
 

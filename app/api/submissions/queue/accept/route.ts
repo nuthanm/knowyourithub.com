@@ -46,6 +46,13 @@ export async function GET(request: Request) {
     });
   }
 
+  if (result.alreadyInCatalog) {
+    return new Response("This company is already listed in the catalog. Submit an edit request to suggest a change.", {
+      status: 409,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   const bannerToken = createMailBannerToken(
     result.item.name,
     result.item.id,

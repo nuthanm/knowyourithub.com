@@ -19,7 +19,12 @@ type SubmitOptions<T extends ZodType> = {
   schema: T;
   buildAdmin: (input: z.infer<T> & { id: string }) => { subject: string; text: string; html: string };
   buildUser: (input: z.infer<T> & { id: string }) => { subject: string; text: string; html: string };
-  save: (input: z.infer<T> & { id: string }) => Promise<{ stored: boolean; duplicate?: boolean }>;
+  save: (input: z.infer<T> & { id: string }) => Promise<{
+    stored: boolean;
+    duplicate?: boolean;
+    alreadyInCatalog?: boolean;
+    existingStatus?: "verified" | "awaiting_review" | "in_progress";
+  }>;
   requireStorage?: boolean;
 };
 
@@ -102,8 +107,24 @@ export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions
     );
   }
 
+  if (stored.alreadyInCatalog) {
+    const error = stored.existingStatus === "verified"
+      ? "This company is already verified in the catalog. Select Edit an existing company to request a change."
+      : stored.existingStatus === "in_progress"
+        ? "This company is already in the review queue and is currently being researched."
+        : "This company is already in the review queue and is awaiting review.";
+    return jsonResponse(
+      { ok: false, error },
+      options.request,
+      { status: 409 },
+    );
+  }
+
   if (stored.duplicate) {
-    return jsonResponse({ ok: true, id, duplicate: true }, options.request);
+    return jsonResponse(
+      { ok: true, id, duplicate: true, existingStatus: stored.existingStatus },
+      options.request,
+    );
   }
 
   const hasSubscriberOptIn =
@@ -157,7 +178,12 @@ export async function handleSubmissionPost(request: Request) {
     buildUser: buildUserConfirmationEmail,
     save: async (input) => {
       const result = await enqueueSubmissionFromMail(input);
-      return { stored: result.stored, duplicate: result.duplicate };
+      return {
+        stored: result.stored,
+        duplicate: result.duplicate,
+        alreadyInCatalog: result.alreadyInCatalog,
+        existingStatus: result.existingStatus,
+      };
     },
     requireStorage: true,
   });

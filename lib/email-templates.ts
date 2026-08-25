@@ -212,6 +212,32 @@ export function buildUserConfirmationEmail(input: SubmissionInput & { id: string
   return { subject, text, html };
 }
 
+export function buildSubmissionRejectedEmail(input: { companyName: string; submitterName: string }) {
+  const subject = `Update on your ${SITE_NAME} request for ${input.companyName}`;
+  const text = [
+    `Hi ${input.submitterName},`,
+    "",
+    `We completed our review of your request for ${input.companyName}.`,
+    "",
+    "We are unable to add this request to the catalog at this time. This can happen when we cannot verify the company details from official sources or when the request does not fit the catalog scope.",
+    "",
+    `You can submit additional official-source details or a correction here: ${getSiteUrl()}/submit`,
+    textFooter(),
+  ].join("\n");
+
+  const html = emailShell(
+    "Update on your request",
+    `
+      <p>Hi ${escapeHtml(input.submitterName)},</p>
+      <p>We completed our review of your request for <strong>${escapeHtml(input.companyName)}</strong>.</p>
+      <p>We are unable to add this request to the catalog at this time. This can happen when we cannot verify the company details from official sources or when the request does not fit the catalog scope.</p>
+      <p>You can submit additional official-source details or a correction through <a href="${getSiteUrl()}/submit" style="color:#0a66c2">Submit request</a>.</p>
+    `,
+  );
+
+  return { subject, text, html };
+}
+
 export function buildSubscribeWelcomeEmail(input: { name: string; email: string }) {
   const subject = `${SITE_NAME} update alerts — you're on the list`;
   const text = [

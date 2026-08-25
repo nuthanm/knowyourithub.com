@@ -307,6 +307,11 @@ export function PipelineQueue() {
             delivered?: number;
             failed?: number;
           };
+          requesterNotification?: {
+            configured?: boolean;
+            delivered?: boolean;
+            failed?: boolean;
+          };
         };
       };
       if (!res.ok || !json.ok) {
@@ -322,7 +327,16 @@ export function PipelineQueue() {
       }
 
       const notification = json.item?.subscriberNotification;
-      if (json.item?.changed && next !== "rejected") {
+      const requesterNotification = json.item?.requesterNotification;
+      if (json.item?.changed && next === "rejected") {
+        if (!requesterNotification?.configured) {
+          setUpdateNotice("Request rejected. Customer email was not sent because SMTP is not configured.");
+        } else if (requesterNotification.failed) {
+          setUpdateNotice("Request rejected, but the customer email could not be delivered.");
+        } else if (requesterNotification.delivered) {
+          setUpdateNotice("Request rejected. A notification email was sent to the customer.");
+        }
+      } else if (json.item?.changed) {
         if (!notification?.configured) {
           setUpdateNotice("Status saved. Subscriber email was not sent because SMTP is not configured.");
         } else if (notification.failed) {

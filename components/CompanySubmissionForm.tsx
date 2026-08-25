@@ -33,6 +33,7 @@ export function CompanySubmissionForm({
   const [captchaError, setCaptchaError] = useState("");
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle");
+  const [duplicateStatus, setDuplicateStatus] = useState<"awaiting_review" | "in_progress" | undefined>();
   const [errorMessage, setErrorMessage] = useState("");
 
   const {
@@ -61,6 +62,7 @@ export function CompanySubmissionForm({
   async function onSubmit(values: FormValues) {
     setStatus("loading");
     setErrorMessage("");
+    setDuplicateStatus(undefined);
     setCaptchaError("");
 
     if (!captchaToken) {
@@ -93,6 +95,7 @@ export function CompanySubmissionForm({
       const json = (await res.json()) as {
         ok?: boolean;
         duplicate?: boolean;
+        existingStatus?: "verified" | "awaiting_review" | "in_progress";
         error?: string;
         retryAfterSeconds?: number;
       };
@@ -107,6 +110,9 @@ export function CompanySubmissionForm({
         }
         throw new Error(json.error || "Unable to submit request.");
       }
+      setDuplicateStatus(json.existingStatus === "in_progress" || json.existingStatus === "awaiting_review"
+        ? json.existingStatus
+        : undefined);
       setStatus(json.duplicate ? "duplicate" : "success");
     } catch (err) {
       setStatus("error");
@@ -139,12 +145,15 @@ export function CompanySubmissionForm({
   }
 
   if (status === "duplicate") {
+    const isInProgress = duplicateStatus === "in_progress";
     return (
       <div className="form-success">
-        <h2>Company already added</h2>
+        <h2>Company already in review</h2>
         <p>
-          {companyName || "This company"} is already in the review queue. We keep one active request
-          per company so the team can review it without duplicates.
+          {companyName || "This company"} is already in the review queue and is {isInProgress
+            ? "currently being researched"
+            : "awaiting review"}. We keep one active request per company so the team can review it
+          without duplicates.
         </p>
         <Link href="/coming-soon" className="app-btn primary">
           View review queue
