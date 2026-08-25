@@ -5,8 +5,8 @@ await loadScriptEnv();
 
 const dbUrl = process.env.DATABASE_URL?.trim();
 if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
-  console.error("DATABASE_URL is missing or placeholder. Aborting migration.");
-  process.exit(1);
+  console.log("DATABASE_URL is missing or placeholder. Skipping migration.");
+  process.exit(0);
 }
 
 function slugify(value) {
