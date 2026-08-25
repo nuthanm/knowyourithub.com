@@ -40988,6 +40988,66 @@
       ]
     },
     {
+      "slug": "russell-tobin",
+      "name": "Russell Tobin",
+      "category": "service",
+      "tagline": "Staffing and recruiting solutions for employers and professionals",
+      "description": "Russell Tobin is a staffing and recruiting firm that connects employers with talent across technology, business, healthcare, industrial, and professional roles. The company operates as part of Pride Global and serves clients across North America, Europe, and Asia-Pacific.",
+      "website": "https://russelltobin.com/",
+      "hq": "New York, United States",
+      "officeCountries": [
+        "United States",
+        "Canada",
+        "United Kingdom",
+        "Ireland",
+        "Netherlands",
+        "Australia",
+        "India",
+        "Malaysia",
+        "Philippines",
+        "Singapore",
+        "Brazil"
+      ],
+      "contactUrl": "https://russelltobin.com/contact-us",
+      "locationsUrl": "https://russelltobin.com/contact-us",
+      "careersUrl": "https://russelltobin.com/career",
+      "linkedin": "https://www.linkedin.com/company/russell-tobin-&-associates-llc/",
+      "domains": [
+        "Staffing",
+        "Recruiting",
+        "Workforce solutions"
+      ],
+      "tags": [
+        "Global staffing",
+        "Recruitment agency",
+        "Professional services"
+      ],
+      "lastVerified": "2026-08-25",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Homepage",
+          "url": "https://russelltobin.com/"
+        },
+        {
+          "label": "About us",
+          "url": "https://russelltobin.com/about"
+        },
+        {
+          "label": "Global market menu",
+          "url": "https://russelltobin.com/"
+        },
+        {
+          "label": "Contact us",
+          "url": "https://russelltobin.com/contact-us"
+        },
+        {
+          "label": "LinkedIn company page",
+          "url": "https://www.linkedin.com/company/russell-tobin-&-associates-llc/"
+        }
+      ]
+    },
+    {
       "slug": "soliton",
       "name": "Soliton Technologies",
       "category": "hybrid",
@@ -41071,5 +41131,5 @@
     }
   ],
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
-  "catalogUpdated": "2026-08-20"
+  "catalogUpdated": "2026-08-25"
 }
