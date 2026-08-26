@@ -173,12 +173,17 @@ try {
       `;
     }
 
-    if (verifiedSlugs.length > 0) {
+    if (verifiedSlugs.length > 0 || verifiedNames.length > 0) {
+      const verifiedLowerNames = verifiedNames.map(n => String(n || "").toLowerCase().trim());
+      
       const updated = await tx`
         UPDATE company_submissions
         SET status = 'verified', updated_at = NOW()
-        WHERE (company_slug = ANY(${verifiedSlugs}) OR company_name = ANY(${verifiedNames}))
-          AND status = 'in_progress'
+        WHERE status = 'in_progress'
+          AND (
+            company_slug = ANY(${verifiedSlugs})
+            OR LOWER(TRIM(company_name)) = ANY(${verifiedLowerNames})
+          )
         RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
@@ -192,12 +197,17 @@ try {
       }
     }
 
-    if (inProgressSlugs.length > 0) {
+    if (inProgressSlugs.length > 0 || inProgressNames.length > 0) {
+      const inProgressLowerNames = inProgressNames.map(n => String(n || "").toLowerCase().trim());
+      
       const updated = await tx`
         UPDATE company_submissions
         SET status = 'in_progress', updated_at = NOW()
-        WHERE (company_slug = ANY(${inProgressSlugs}) OR company_name = ANY(${inProgressNames}))
-          AND status = 'awaiting_review'
+        WHERE status = 'awaiting_review'
+          AND (
+            company_slug = ANY(${inProgressSlugs})
+            OR LOWER(TRIM(company_name)) = ANY(${inProgressLowerNames})
+          )
         RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
