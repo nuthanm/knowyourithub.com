@@ -193,7 +193,10 @@ try {
         
         // Check if this submission matches any verified entry
         const matchesBySlug = subSlug && verifiedSlugs.includes(subSlug);
-        const matchesByName = verifiedNames.some(n => String(n || "").toLowerCase().trim() === subName);
+        const matchesByName = verifiedNames.some(n => {
+          const catName = String(n || "").toLowerCase().trim();
+          return catName === subName || catName.includes(subName) || subName.includes(catName);
+        });
         
         if (matchesBySlug || matchesByName) {
           await tx`
@@ -231,7 +234,10 @@ try {
         
         // Check if this submission matches any in_progress entry
         const matchesBySlug = subSlug && inProgressSlugs.includes(subSlug);
-        const matchesByName = inProgressNames.some(n => String(n || "").toLowerCase().trim() === subName);
+        const matchesByName = inProgressNames.some(n => {
+          const catName = String(n || "").toLowerCase().trim();
+          return catName === subName || catName.includes(subName) || subName.includes(catName);
+        });
         
         if (matchesBySlug || matchesByName) {
           await tx`
