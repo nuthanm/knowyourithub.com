@@ -31,29 +31,107 @@
     },
     {
       "slug": "impetus",
-      "name": "Impetus",
-      "category": "unknown",
-      "tagline": "Profile is awaiting review",
-      "description": "This company profile is being reviewed before it is published as verified.",
+      "name": "Impetus Technologies",
+      "category": "service",
+      "tagline": "Enterprise architects of Agentic AI and data modernization",
+      "description": "Impetus Technologies is a software-led system integrator specializing in enterprise AI, data modernization, and cloud transformation. Founded over 15 years ago, Impetus helps enterprises modernize legacy data estates, engineer enterprise context for AI systems, orchestrate trusted agentic AI workflows, and govern them at scale.",
       "website": "https://www.impetus.ai/",
-      "hq": "Unknown",
+      "hq": "USA",
+      "founded": 2010,
+      "officeCities": [
+        "San Jose",
+        "New York",
+        "London",
+        "Bangalore",
+        "Singapore",
+        "Tokyo"
+      ],
+      "officeCountries": [
+        "USA",
+        "UK",
+        "India",
+        "Singapore",
+        "Japan"
+      ],
       "domains": [
-        "Unknown"
+        "Enterprise AI",
+        "Data Engineering",
+        "Cloud Engineering",
+        "System Integration",
+        "AI/ML"
       ],
       "tags": [
-        "Community request"
+        "System Integrator",
+        "Global"
       ],
       "services": [
-        "Under review"
+        "Enterprise AI",
+        "Cloud Engineering",
+        "Data Engineering",
+        "Data Modernization",
+        "Agentic AI Development",
+        "AI Governance and Observability"
       ],
+      "products": [
+        "Impetus Leap™ AI Family",
+        "Impetus LeapLogic™ Suite",
+        "Impetus Prism™",
+        "Impetus Context Fabric™"
+      ],
+      "vision": "To close the Context Gap between enterprise data and agentic AI through software-led transformation and strategic modernization.",
+      "leadership": [
+        {
+          "name": "Ritu Bapna",
+          "role": "Founder & Board Member"
+        },
+        {
+          "name": "Praveen Kankariya",
+          "role": "Founder & Board Member"
+        },
+        {
+          "name": "Nachiket Deshpande",
+          "role": "CEO"
+        },
+        {
+          "name": "Vikash Gaur",
+          "role": "COO"
+        },
+        {
+          "name": "Samir Gosavi",
+          "role": "Chief Revenue Officer"
+        },
+        {
+          "name": "Deepak Khosla",
+          "role": "Chief Growth Officer and Head of AI Business"
+        }
+      ],
+      "careersUrl": "https://www.impetus.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/impetus",
+      "twitter": "https://twitter.com/impetustech",
       "sources": [
         {
-          "label": "Community submission",
-          "url": "https://www.impetus.ai/"
+          "label": "Company About Page",
+          "url": "https://www.impetus.ai/company/"
+        },
+        {
+          "label": "Meet Our Team - Leadership",
+          "url": "https://www.impetus.com/about/meet-our-team/"
+        },
+        {
+          "label": "Impetus Corporate",
+          "url": "https://www.impetus.com/"
+        },
+        {
+          "label": "Services & Solutions",
+          "url": "https://www.impetus.ai/services-and-solutions/"
+        },
+        {
+          "label": "Leap AI Family Overview",
+          "url": "https://www.impetus.ai/leap-ai-family/"
         }
       ],
       "lastVerified": "2026-08-26",
-      "verificationStatus": "unverified"
+      "verificationStatus": "in_progress"
     },
     {
       "slug": "lxg-injection-molding",
