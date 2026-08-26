@@ -41,6 +41,7 @@ export function CompanySubmissionForm({
     handleSubmit,
     control,
     setValue,
+    trigger,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(submissionSchema),
@@ -59,11 +60,37 @@ export function CompanySubmissionForm({
     setValue("formStartedAt", Date.now());
   }, [setValue]);
 
+  function getFriendlyErrorMessage(message: string) {
+    if (message.includes("did not match the expected pattern") || message.includes("valid website")) {
+      return "Please check the website URL and try again.";
+    }
+    if (message.includes("CAPTCHA")) {
+      return "Please complete the quick check correctly before submitting.";
+    }
+    if (message.includes("Privacy Policy and Terms")) {
+      return "You must accept the Privacy Policy and Terms before submitting.";
+    }
+    if (message.includes("at least 20 characters")) {
+      return "Please add a bit more detail so we can verify the request.";
+    }
+    if (message.includes("valid email")) {
+      return "Please enter a valid email address.";
+    }
+    return "Please review the highlighted fields and try again.";
+  }
+
   async function onSubmit(values: FormValues) {
     setStatus("loading");
     setErrorMessage("");
     setDuplicateStatus(undefined);
     setCaptchaError("");
+
+    const isValid = await trigger();
+    if (!isValid) {
+      setStatus("error");
+      setErrorMessage("Please review the highlighted fields and correct the errors before submitting.");
+      return;
+    }
 
     if (!captchaToken) {
       setStatus("error");
@@ -115,8 +142,9 @@ export function CompanySubmissionForm({
         : undefined);
       setStatus(json.duplicate ? "duplicate" : "success");
     } catch (err) {
+      const serverMessage = err instanceof Error ? err.message : "Unable to submit request.";
       setStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "Unable to submit request.");
+      setErrorMessage(getFriendlyErrorMessage(serverMessage));
       setCaptchaAnswer("");
       setCaptchaToken("");
       setCaptchaResetKey((k) => k + 1);
@@ -265,6 +293,7 @@ export function CompanySubmissionForm({
           {...register("message")}
           placeholder="Describe category (product/service), headcount, domains, interview patterns, careers link, etc."
         />
+        <p className="form-hint">Add at least 20 characters with the key details that help us verify the company.</p>
         {errors.message && <p className="form-error">{errors.message.message}</p>}
       </div>
 

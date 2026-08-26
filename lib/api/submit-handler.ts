@@ -44,6 +44,29 @@ function getUserRecipientEmail(input: Record<string, unknown>) {
   return typeof email === "string" ? email.trim() : "";
 }
 
+function getFriendlyValidationMessage(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("valid email") || normalized.includes("email")) {
+    return "Please enter a valid email address.";
+  }
+  if (normalized.includes("website") || normalized.includes("url") || normalized.includes("expected pattern")) {
+    return "Please check the website URL and try again.";
+  }
+  if (normalized.includes("privacy policy") || normalized.includes("terms")) {
+    return "You must accept the Privacy Policy and Terms before submitting.";
+  }
+  if (normalized.includes("at least 20 characters") || normalized.includes("describe") || normalized.includes("message")) {
+    return "Please add at least 20 characters so we can review the request properly.";
+  }
+  if (normalized.includes("captcha")) {
+    return "Please complete the quick check correctly before submitting.";
+  }
+  if (normalized.includes("name") || normalized.includes("company")) {
+    return "Please review the highlighted fields and try again.";
+  }
+  return "Please review the highlighted fields and correct the errors before submitting.";
+}
+
 export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions<T>) {
   const ip = getRequestIp(options.request.headers.get("x-forwarded-for"));
   const rate = await checkRateLimitAsync(ip);
@@ -68,7 +91,8 @@ export async function handleFormSubmit<T extends ZodType>(options: SubmitOptions
 
   const parsed = options.schema.safeParse(sanitizeSubmissionBody(body as Record<string, unknown>));
   if (!parsed.success) {
-    const message = parsed.error.issues[0]?.message ?? "Invalid form data.";
+    const rawMessage = parsed.error.issues[0]?.message ?? "Invalid form data.";
+    const message = getFriendlyValidationMessage(rawMessage);
     return jsonResponse({ ok: false, error: message }, options.request, { status: 400 });
   }
 

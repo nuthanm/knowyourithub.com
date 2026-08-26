@@ -1,8 +1,60 @@
 {
   "dataYear": 2026,
-  "catalogUpdated": "2026-08-25",
+  "catalogUpdated": "2026-08-26",
   "disclaimer": "Active community submissions awaiting review or in progress.",
   "companies": [
+    {
+      "slug": "lxg-mold-tooling",
+      "name": "LXG Mold Tooling",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://lxgmoldtooling.com/",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://lxgmoldtooling.com/"
+        }
+      ],
+      "lastVerified": "2026-08-26",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "impetus",
+      "name": "Impetus",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://www.impetus.ai/",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://www.impetus.ai/"
+        }
+      ],
+      "lastVerified": "2026-08-26",
+      "verificationStatus": "unverified"
+    },
     {
       "slug": "lxg-injection-molding",
       "name": "LXG Injection Molding",
@@ -26,7 +78,7 @@
           "url": "https://lxginjectionmolding.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -52,7 +104,7 @@
           "url": "https://affle.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -78,7 +130,7 @@
           "url": "https://www.tatacommunications.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -104,7 +156,7 @@
           "url": "https://sagility.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -130,7 +182,7 @@
           "url": "https://kfin-technologies.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -156,7 +208,7 @@
           "url": "https://route-mobile.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -182,7 +234,7 @@
           "url": "https://indegene.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -208,7 +260,7 @@
           "url": "https://latentview-analytics.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -234,7 +286,7 @@
           "url": "https://eclerx-services.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -260,7 +312,7 @@
           "url": "https://tata-elxsi.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -286,7 +338,7 @@
           "url": "https://kpit-technologies.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -312,7 +364,7 @@
           "url": "https://hyundai.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -338,7 +390,7 @@
           "url": "https://elk-education-consultants-pvt-ltd.com"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -364,7 +416,7 @@
           "url": "https://www.orioninc.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -390,7 +442,7 @@
           "url": "http://www.brickredsys.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
     {
@@ -416,7 +468,7 @@
           "url": "https://crossinghurdles.com/"
         }
       ],
-      "lastVerified": "2026-08-25",
+      "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     }
   ]

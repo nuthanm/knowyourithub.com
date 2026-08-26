@@ -1,17 +1,22 @@
 import { z } from "zod";
 
+const websiteSchema = z.union([
+  z.literal(""),
+  z.string().trim().url("Please enter a valid website, starting with https://").max(300),
+]);
+
 export const submissionSchema = z.object({
-  requestType: z.enum(["add", "edit"]),
-  companyName: z.string().trim().min(2, "Company name is required").max(120),
+  requestType: z.enum(["add", "edit"], { message: "Please choose a request type." }),
+  companyName: z.string().trim().min(2, "Company name needs at least 2 characters.").max(120, "Company name must be 120 characters or fewer."),
   companySlug: z.string().trim().max(120).optional(),
-  website: z.string().trim().url("Enter a valid website URL").max(300).optional().or(z.literal("")),
-  submitterName: z.string().trim().min(2, "Your name is required").max(80),
-  submitterEmail: z.string().trim().email("Enter a valid email").max(120),
-  message: z.string().trim().min(20, "Please describe the add or edit request (min 20 characters)").max(4000),
+  website: websiteSchema.optional(),
+  submitterName: z.string().trim().min(2, "Your name needs at least 2 characters.").max(80, "Your name must be 80 characters or fewer."),
+  submitterEmail: z.string().trim().email("Please enter a valid email address.").max(120, "Email must be 120 characters or fewer."),
+  message: z.string().trim().min(20, "Please add at least 20 characters so we can review the request properly.").max(4000, "Message must be 4000 characters or fewer."),
   subscribeToUpdates: z.boolean().optional(),
   acceptPolicy: z
-    .boolean({ message: "You must accept the Privacy Policy and Terms" })
-    .refine((v) => v === true, { message: "You must accept the Privacy Policy and Terms" }),
+    .boolean({ message: "You must accept the Privacy Policy and Terms." })
+    .refine((v) => v === true, { message: "You must accept the Privacy Policy and Terms." }),
   captchaToken: z.string().optional(),
   captchaAnswer: z.number().optional(),
   websiteField: z.string().optional(),
