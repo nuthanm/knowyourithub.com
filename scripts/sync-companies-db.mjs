@@ -91,6 +91,9 @@ const inProgressNames = companies
   .map((company) => String(company.name || "").trim())
   .filter(Boolean);
 
+console.log(`Extracted verified: slugs=${JSON.stringify(verifiedSlugs)}, names=${JSON.stringify(verifiedNames)}`);
+console.log(`Extracted in_progress: slugs=${JSON.stringify(inProgressSlugs)}, names=${JSON.stringify(inProgressNames)}`);
+
 const allCatalogSlugs = new Set(
   companies
     .map((company) => String(company.slug || "").trim())
@@ -173,51 +176,79 @@ try {
       `;
     }
 
+    // For verified: update all in_progress records to verified if they match our catalog
     if (verifiedSlugs.length > 0 || verifiedNames.length > 0) {
-      const verifiedLowerNames = verifiedNames.map(n => String(n || "").toLowerCase().trim());
-      
-      const updated = await tx`
-        UPDATE company_submissions
-        SET status = 'verified', updated_at = NOW()
+      // Query existing in_progress submissions to match against
+      const existingSubmissions = await tx`
+        SELECT id, company_name, company_slug, submitter_name, submitter_email
+        FROM company_submissions
         WHERE status = 'in_progress'
-          AND (
-            company_slug = ANY(${verifiedSlugs})
-            OR LOWER(TRIM(company_name)) = ANY(${verifiedLowerNames})
-          )
-        RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
-      for (const row of updated) {
-        newlyVerified.push({
-          companyName: String(row.company_name || "").trim(),
-          companySlug: String(row.company_slug || "").trim(),
-          submitterName: String(row.submitter_name || "").trim(),
-          submitterEmail: String(row.submitter_email || "").trim(),
-        });
+      console.log(`Found ${existingSubmissions.length} existing in_progress submissions to check for verification`);
+
+      for (const submission of existingSubmissions) {
+        const subName = String(submission.company_name || "").toLowerCase().trim();
+        const subSlug = String(submission.company_slug || "").toLowerCase().trim();
+        
+        // Check if this submission matches any verified entry
+        const matchesBySlug = subSlug && verifiedSlugs.includes(subSlug);
+        const matchesByName = verifiedNames.some(n => String(n || "").toLowerCase().trim() === subName);
+        
+        if (matchesBySlug || matchesByName) {
+          await tx`
+            UPDATE company_submissions
+            SET status = 'verified', updated_at = NOW()
+            WHERE id = ${submission.id}
+          `;
+          
+          newlyVerified.push({
+            companyName: String(submission.company_name || "").trim(),
+            companySlug: String(submission.company_slug || "").trim(),
+            submitterName: String(submission.submitter_name || "").trim(),
+            submitterEmail: String(submission.submitter_email || "").trim(),
+          });
+          
+          console.log(`Verified submission: ${submission.company_name} (matched by ${matchesBySlug ? 'slug' : 'name'})`);
+        }
       }
     }
 
+    // For in_progress: update all awaiting_review records to in_progress if they match our catalog
     if (inProgressSlugs.length > 0 || inProgressNames.length > 0) {
-      const inProgressLowerNames = inProgressNames.map(n => String(n || "").toLowerCase().trim());
-      
-      const updated = await tx`
-        UPDATE company_submissions
-        SET status = 'in_progress', updated_at = NOW()
+      // Query existing awaiting_review submissions to match against
+      const existingSubmissions = await tx`
+        SELECT id, company_name, company_slug, submitter_name, submitter_email
+        FROM company_submissions
         WHERE status = 'awaiting_review'
-          AND (
-            company_slug = ANY(${inProgressSlugs})
-            OR LOWER(TRIM(company_name)) = ANY(${inProgressLowerNames})
-          )
-        RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
-      for (const row of updated) {
-        newlyInProgress.push({
-          companyName: String(row.company_name || "").trim(),
-          companySlug: String(row.company_slug || "").trim(),
-          submitterName: String(row.submitter_name || "").trim(),
-          submitterEmail: String(row.submitter_email || "").trim(),
-        });
+      console.log(`Found ${existingSubmissions.length} existing awaiting_review submissions to check for in_progress`);
+
+      for (const submission of existingSubmissions) {
+        const subName = String(submission.company_name || "").toLowerCase().trim();
+        const subSlug = String(submission.company_slug || "").toLowerCase().trim();
+        
+        // Check if this submission matches any in_progress entry
+        const matchesBySlug = subSlug && inProgressSlugs.includes(subSlug);
+        const matchesByName = inProgressNames.some(n => String(n || "").toLowerCase().trim() === subName);
+        
+        if (matchesBySlug || matchesByName) {
+          await tx`
+            UPDATE company_submissions
+            SET status = 'in_progress', updated_at = NOW()
+            WHERE id = ${submission.id}
+          `;
+          
+          newlyInProgress.push({
+            companyName: String(submission.company_name || "").trim(),
+            companySlug: String(submission.company_slug || "").trim(),
+            submitterName: String(submission.submitter_name || "").trim(),
+            submitterEmail: String(submission.submitter_email || "").trim(),
+          });
+          
+          console.log(`Updated to in_progress: ${submission.company_name} (matched by ${matchesBySlug ? 'slug' : 'name'})`);
+        }
       }
     }
   });
@@ -361,8 +392,8 @@ try {
   }
 
   console.log(`Synced ${companies.length} companies to company_profiles.`);
-  console.log(`Marked submission rows verified for ${verifiedSlugs.length} verified slugs.`);
-  console.log(`Marked submission rows in_progress for ${inProgressSlugs.length} in_progress slugs.`);
+  console.log(`Marked submission rows verified for ${verifiedSlugs.length} verified slugs and ${verifiedNames.length} verified names. Updated ${newlyVerified.length} records.`);
+  console.log(`Marked submission rows in_progress for ${inProgressSlugs.length} in_progress slugs and ${inProgressNames.length} in_progress names. Updated ${newlyInProgress.length} records.`);
   const pruned = await prunePipelineJson();
   if (pruned.removed > 0) {
     console.log(`Removed ${pruned.removed} synced entries from data/pipeline.json.`);
