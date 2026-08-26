@@ -166,9 +166,8 @@ try {
         SELECT id, company_name, company_slug, submitter_name, submitter_email, status
         FROM company_submissions
         WHERE (
-          (company_slug = ${slug})
-          OR (LOWER(company_name) ILIKE LOWER(${name}))
-          OR (LOWER(CONCAT('%', company_name, '%')) ILIKE LOWER(CONCAT('%', name, '%')))
+          company_slug = ${slug}
+          OR LOWER(company_name) ILIKE LOWER(${name})
         )
         AND status != ${targetStatus}
       `;
