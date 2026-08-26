@@ -227,6 +227,7 @@ try {
       `;
 
       console.log(`Found ${existingSubmissions.length} existing awaiting_review submissions to check for in_progress`);
+      console.log(`DEBUG: inProgressSlugs=[${inProgressSlugs.join(',')}], inProgressNames=[${inProgressNames.join(',')}]`);
 
       for (const submission of existingSubmissions) {
         const subName = String(submission.company_name || "").toLowerCase().trim();
@@ -238,6 +239,9 @@ try {
           const catName = String(n || "").toLowerCase().trim();
           return catName === subName || catName.includes(subName) || subName.includes(catName);
         });
+        
+        // Debug output for each submission
+        console.log(`DEBUG submission: name="${subName}", slug="${subSlug}", matchesBySlug=${matchesBySlug}, matchesByName=${matchesByName}`);
         
         if (matchesBySlug || matchesByName) {
           await tx`
