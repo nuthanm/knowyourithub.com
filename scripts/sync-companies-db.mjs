@@ -71,9 +71,6 @@ if (companies.length === 0) {
   process.exit(0);
 }
 
-console.log(`Extracted verified: slugs=${JSON.stringify(verifiedSlugs)}, names=${JSON.stringify(verifiedNames)}`);
-console.log(`Extracted in_progress: slugs=${JSON.stringify(inProgressSlugs)}, names=${JSON.stringify(inProgressNames)}`);
-
 const allCatalogSlugs = new Set(
   companies
     .map((company) => String(company.slug || "").trim())
