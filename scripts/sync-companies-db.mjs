@@ -76,6 +76,11 @@ const verifiedSlugs = companies
   .map((company) => String(company.slug || "").trim())
   .filter(Boolean);
 
+const inProgressSlugs = companies
+  .filter((company) => normalizeStatus(company.verificationStatus) === "in_progress")
+  .map((company) => String(company.slug || "").trim())
+  .filter(Boolean);
+
 const allCatalogSlugs = new Set(
   companies
     .map((company) => String(company.slug || "").trim())
@@ -121,6 +126,7 @@ const sql = postgres(dbUrl, { max: 1, prepare: false });
 
 try {
   const newlyVerified = [];
+  const newlyInProgress = [];
 
   await sql.begin(async (tx) => {
     await tx`
@@ -168,6 +174,25 @@ try {
 
       for (const row of updated) {
         newlyVerified.push({
+          companyName: String(row.company_name || "").trim(),
+          companySlug: String(row.company_slug || "").trim(),
+          submitterName: String(row.submitter_name || "").trim(),
+          submitterEmail: String(row.submitter_email || "").trim(),
+        });
+      }
+    }
+
+    if (inProgressSlugs.length > 0) {
+      const updated = await tx`
+        UPDATE company_submissions
+        SET status = 'in_progress', updated_at = NOW()
+        WHERE company_slug = ANY(${inProgressSlugs})
+          AND status IN ('awaiting_review', 'pending')
+        RETURNING company_name, company_slug, submitter_name, submitter_email
+      `;
+
+      for (const row of updated) {
+        newlyInProgress.push({
           companyName: String(row.company_name || "").trim(),
           companySlug: String(row.company_slug || "").trim(),
           submitterName: String(row.submitter_name || "").trim(),
@@ -246,8 +271,78 @@ try {
     }
   }
 
+  if (newlyInProgress.length > 0 && isMailerConfigured()) {
+    const subscribers = await sql<Array<{ email: string }>>`
+      SELECT email
+      FROM catalog_subscribers
+      ORDER BY created_at DESC
+      LIMIT 300
+    `;
+
+    if (subscribers.length > 0) {
+      const transport = getTransport();
+      if (transport) {
+        const requesterSent = new Set();
+        for (const company of newlyInProgress) {
+          const profilePath = company.companySlug ? `/companies/${company.companySlug}` : "/coming-soon";
+          const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+          const subject = `[Know Your IT Hub] ${company.companyName} status update: In Progress`;
+          const text = [
+            `${company.companyName} moved to: In Progress`,
+            "",
+            "A company request is now under review in the catalog.",
+            `Track status: ${site}/coming-soon`,
+            `View profile: ${site}${profilePath}`,
+          ].join("\n");
+
+          for (const subscriber of subscribers) {
+            const to = String(subscriber.email || "").trim();
+            if (!to) continue;
+            try {
+              await transport.sendMail({
+                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                to,
+                subject,
+                text,
+                html: `<p><strong>${company.companyName}</strong> moved to <strong>In Progress</strong>.</p><p>A company request is now under review in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
+              });
+            } catch {
+              // Keep sync successful if individual email delivery fails.
+            }
+          }
+
+          const requesterEmail = String(company.submitterEmail || "").trim().toLowerCase();
+          const requesterName = company.submitterName || "there";
+          const requesterDedupKey = `${requesterEmail}|${company.companySlug || company.companyName}`;
+          if (isValidEmail(requesterEmail) && !requesterSent.has(requesterDedupKey)) {
+            requesterSent.add(requesterDedupKey);
+            try {
+              await transport.sendMail({
+                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                to: requesterEmail,
+                subject: `[Know Your IT Hub] Your request for ${company.companyName} is now In Progress`,
+                text: [
+                  `Hi ${requesterName},`,
+                  "",
+                  `Great news: your request for ${company.companyName} is now under review in the catalog.`,
+                  "",
+                  `Track status: ${site}/coming-soon`,
+                  `View profile: ${site}${profilePath}`,
+                ].join("\n"),
+                html: `<p>Hi ${requesterName},</p><p>Great news: your request for <strong>${company.companyName}</strong> is now <strong>In Progress</strong> in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
+              });
+            } catch {
+              // Keep sync successful if requester notification fails.
+            }
+          }
+        }
+      }
+    }
+  }
+
   console.log(`Synced ${companies.length} companies to company_profiles.`);
   console.log(`Marked submission rows verified for ${verifiedSlugs.length} verified slugs.`);
+  console.log(`Marked submission rows in_progress for ${inProgressSlugs.length} in_progress slugs.`);
   const pruned = await prunePipelineJson();
   if (pruned.removed > 0) {
     console.log(`Removed ${pruned.removed} synced entries from data/pipeline.json.`);
