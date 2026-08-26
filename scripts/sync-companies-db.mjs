@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import nodemailer from "nodemailer";
 import postgres from "postgres";
@@ -12,8 +12,20 @@ if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
   process.exit(0);
 }
 
-const catalogPath = resolve(process.cwd(), "data", "catalog.generated.json");
+const generatedCatalogPath = resolve(process.cwd(), "data", "catalog.generated.json");
+const companiesJsonPath = resolve(process.cwd(), "data", "companies.json");
 const pipelinePath = resolve(process.cwd(), "data", "pipeline.json");
+
+// Determine which file to read: prefer companies.json (source of truth), fall back to catalog.generated.json
+let catalogPath;
+try {
+  await access(companiesJsonPath);
+  catalogPath = companiesJsonPath;
+  console.log("Using data/companies.json as source (user-editable source of truth)");
+} catch {
+  catalogPath = generatedCatalogPath;
+  console.log("Using data/catalog.generated.json as source (generated from DB)");
+}
 
 function normalizeStatus(value) {
   if (value === "verified" || value === "in_progress" || value === "unverified") return value;
@@ -50,12 +62,12 @@ function isValidEmail(value) {
 const raw = await readFile(catalogPath, "utf8");
 const catalog = JSON.parse(raw);
 if (!catalog || !Array.isArray(catalog.companies)) {
-  throw new Error("data/catalog.generated.json must contain companies[]");
+  throw new Error("Company data file must contain companies[] array");
 }
 
 const companies = catalog.companies;
 if (companies.length === 0) {
-  console.log("data/catalog.generated.json has no companies. Skipping sync.");
+  console.log("No companies found in source file. Skipping sync.");
   process.exit(0);
 }
 
