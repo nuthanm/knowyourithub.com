@@ -76,9 +76,19 @@ const verifiedSlugs = companies
   .map((company) => String(company.slug || "").trim())
   .filter(Boolean);
 
+const verifiedNames = companies
+  .filter((company) => normalizeStatus(company.verificationStatus) === "verified")
+  .map((company) => String(company.name || "").trim())
+  .filter(Boolean);
+
 const inProgressSlugs = companies
   .filter((company) => normalizeStatus(company.verificationStatus) === "in_progress")
   .map((company) => String(company.slug || "").trim())
+  .filter(Boolean);
+
+const inProgressNames = companies
+  .filter((company) => normalizeStatus(company.verificationStatus) === "in_progress")
+  .map((company) => String(company.name || "").trim())
   .filter(Boolean);
 
 const allCatalogSlugs = new Set(
@@ -167,8 +177,8 @@ try {
       const updated = await tx`
         UPDATE company_submissions
         SET status = 'verified', updated_at = NOW()
-        WHERE company_slug = ANY(${verifiedSlugs})
-          AND status IN ('awaiting_review', 'in_progress', 'pending', 'reviewed', 'accepted')
+        WHERE (company_slug = ANY(${verifiedSlugs}) OR company_name = ANY(${verifiedNames}))
+          AND status = 'in_progress'
         RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
@@ -186,8 +196,8 @@ try {
       const updated = await tx`
         UPDATE company_submissions
         SET status = 'in_progress', updated_at = NOW()
-        WHERE company_slug = ANY(${inProgressSlugs})
-          AND status IN ('awaiting_review', 'pending')
+        WHERE (company_slug = ANY(${inProgressSlugs}) OR company_name = ANY(${inProgressNames}))
+          AND status = 'awaiting_review'
         RETURNING company_name, company_slug, submitter_name, submitter_email
       `;
 
