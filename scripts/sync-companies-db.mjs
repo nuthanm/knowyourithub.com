@@ -271,7 +271,7 @@ try {
   }
 
   if (newlyInProgress.length > 0 && isMailerConfigured()) {
-    const subscribers = await sql<Array<{ email: string }>>`
+    const subscribers = await sql`
       SELECT email
       FROM catalog_subscribers
       ORDER BY created_at DESC
