@@ -1,6 +1,6 @@
 {
   "dataYear": 2026,
-  "catalogUpdated": "2026-08-26",
+  "catalogUpdated": "2026-08-27",
   "disclaimer": "Active community submissions awaiting review or in progress.",
   "companies": [
     {
@@ -369,29 +369,114 @@
     },
     {
       "slug": "tata-elxsi",
-      "name": "TATA Elxsi",
-      "category": "unknown",
-      "tagline": "Profile is awaiting review",
-      "description": "This company profile is being reviewed before it is published as verified.",
-      "website": "https://tata-elxsi.com",
-      "hq": "Unknown",
+      "name": "Tata Elxsi",
+      "category": "hybrid",
+      "tagline": "AI-first design and technology services for digital transformation",
+      "description": "Tata Elxsi is a leading provider of design and technology services offering AI-first and design-led solutions for digital transformation. With 35+ years of expertise, the company helps global customers reimagine products and services through design thinking and cutting-edge digital technologies across automotive, aerospace, healthcare, and semiconductor sectors.",
+      "website": "https://www.tataelxsi.com",
+      "founded": "1989",
+      "hq": "Bengaluru, India",
+      "officeCities": [
+        "Bengaluru",
+        "Chennai",
+        "Hyderabad",
+        "Mumbai",
+        "Pune",
+        "Trivandrum"
+      ],
+      "officeCountries": [
+        "India",
+        "United States",
+        "Canada",
+        "United Kingdom",
+        "Ireland",
+        "Netherlands",
+        "Germany",
+        "France",
+        "Spain",
+        "Portugal",
+        "Poland",
+        "South Africa",
+        "UAE",
+        "Japan",
+        "Malaysia"
+      ],
+      "totalOfficeLocations": "36+ locations worldwide",
+      "headcountGlobal": "13,000+",
+      "headcountNote": "Global workforce across design and technology centers; significant presence in India",
       "domains": [
-        "Unknown"
+        "Design & Engineering Services",
+        "Automotive",
+        "Healthcare & Life Sciences",
+        "Aerospace & Defence",
+        "Semiconductor Design",
+        "AI/ML",
+        "Embedded Systems"
       ],
       "tags": [
-        "Community request"
+        "MNC",
+        "Public company",
+        "35+ years",
+        "Design-led"
+      ],
+      "products": [
+        "DevStudio.ai - GenAI Platform for Automotive",
+        "AnaTel™ - AI-Native Platform for Healthcare",
+        "ViTel™ - Material Intelligence for Med-Tech",
+        "Coalesce - XR Platform for Digital Twins",
+        "NEURON - AI-led Network Transformation",
+        "Scalable Fleet Intelligence"
       ],
       "services": [
-        "Under review"
+        "Design & Engineering Services",
+        "Software Development",
+        "AI/GenAI Solutions",
+        "IoT & Cloud Implementation",
+        "Platform Development",
+        "Embedded Product Design"
       ],
-      "sources": [
+      "careersUrl": "https://www.tataelxsi.com/careers",
+      "linkedin": "https://www.linkedin.com/company/tata-elxsi/",
+      "twitter": "https://twitter.com/tataelxsi",
+      "leadership": [
         {
-          "label": "Community submission",
-          "url": "https://tata-elxsi.com"
+          "name": "Manoj Raghavan",
+          "role": "CEO & Managing Director"
+        },
+        {
+          "name": "N. Ganapathy Subramaniam",
+          "role": "Chairman"
         }
       ],
-      "lastVerified": "2026-08-26",
-      "verificationStatus": "unverified"
+      "vision": "To deliver AI-first and design-led digital transformation solutions that help global enterprises reimagine their products and services.",
+      "lastVerified": "2026-08-27",
+      "verificationStatus": "in_progress",
+      "sources": [
+        {
+          "label": "About Us",
+          "url": "https://www.tataelxsi.com/about-us"
+        },
+        {
+          "label": "Products & Platforms",
+          "url": "https://www.tataelxsi.com/products"
+        },
+        {
+          "label": "Careers",
+          "url": "https://www.tataelxsi.com/careers"
+        },
+        {
+          "label": "Investors",
+          "url": "https://www.tataelxsi.com/investors"
+        },
+        {
+          "label": "LinkedIn Company",
+          "url": "https://www.linkedin.com/company/tata-elxsi/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://www.tataelxsi.com/contact-form"
+        }
+      ]
     },
     {
       "slug": "kpit-technologies",

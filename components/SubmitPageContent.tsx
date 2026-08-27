@@ -20,10 +20,10 @@ export function SubmitPageContent() {
           <>
             Help keep the <strong>{DATA_YEAR}</strong> catalog accurate. We review every request
             against <strong>official public sources</strong> before publishing. Read{" "}
-            <Link href="/brief">The Brief</Link> to see what this app covers. To protect the
+            <Link href="/brief"><strong>The Brief</strong></Link> to see what this app covers. To protect the
             portal from spam, each network can submit up to eight requests in 10 minutes. If that
             limit is reached, wait for the time shown after submitting, or email{" "}
-            <a href="mailto:inbox.nuthan@gmail.com">inbox.nuthan@gmail.com</a> and we will add
+            <a href="mailto:inbox.nuthan@gmail.com"><strong>inbox.nuthan@gmail.com</strong></a> and we will add
             your request to the review queue.
           </>
         }
