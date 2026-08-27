@@ -1,6 +1,6 @@
 {
   "dataYear": 2026,
-  "catalogUpdated": "2026-08-25",
+  "catalogUpdated": "2026-08-27",
   "disclaimer": "Profiles reflect publicly available information for the stated year. Company details change — always verify on official sites before applying.",
   "companies": [
     {
@@ -41267,6 +41267,79 @@
       "description": "zuci Systems provides Quality engineering and Data engineering solutions for organizations.",
       "lastVerified": "2026-08-25",
       "verificationStatus": "verified"
+    },
+    {
+      "slug": "impetus",
+      "name": "Impetus Technologies",
+      "category": "service",
+      "tagline": "Enterprise architects of Agentic AI and data modernization",
+      "description": "Impetus Technologies is a software-led system integrator specializing in enterprise AI, data modernization, and cloud transformation. Founded over 15 years ago, Impetus helps enterprises modernize legacy data estates, engineer enterprise context for AI systems, orchestrate trusted agentic AI workflows, and govern them at scale.",
+      "website": "https://www.impetus.ai",
+      "hq": "USA",
+      "founded": 2010,
+      "officeCities": ["San Jose", "New York", "London", "Bangalore", "Singapore", "Tokyo"],
+      "officeCountries": ["USA", "UK", "India", "Singapore", "Japan"],
+      "domains": ["Enterprise AI", "Data Engineering", "Cloud Engineering", "System Integration", "AI/ML"],
+      "tags": ["System Integrator", "Global"],
+      "services": ["Enterprise AI", "Cloud Engineering", "Data Engineering", "Data Modernization", "Agentic AI Development", "AI Governance and Observability"],
+      "products": ["Impetus Leap™ AI Family", "Impetus LeapLogic™ Suite", "Impetus Prism™", "Impetus Context Fabric™"],
+      "vision": "To close the Context Gap between enterprise data and agentic AI through software-led transformation and strategic modernization.",
+      "leadership": [
+        { "name": "Ritu Bapna", "role": "Founder & Board Member" },
+        { "name": "Praveen Kankariya", "role": "Founder & Board Member" },
+        { "name": "Nachiket Deshpande", "role": "CEO" },
+        { "name": "Vikash Gaur", "role": "COO" },
+        { "name": "Samir Gosavi", "role": "Chief Revenue Officer" },
+        { "name": "Deepak Khosla", "role": "Chief Growth Officer and Head of AI Business" }
+      ],
+      "careersUrl": "https://www.impetus.com/careers/",
+      "linkedin": "https://www.linkedin.com/company/impetus",
+      "twitter": "https://twitter.com/impetustech",
+      "sources": [
+        { "label": "Company About Page", "url": "https://www.impetus.ai/company/" },
+        { "label": "Meet Our Team - Leadership", "url": "https://www.impetus.com/about/meet-our-team/" },
+        { "label": "Impetus Corporate", "url": "https://www.impetus.com/" },
+        { "label": "Services & Solutions", "url": "https://www.impetus.ai/services-and-solutions/" },
+        { "label": "Leap AI Family Overview", "url": "https://www.impetus.ai/leap-ai-family/" }
+      ],
+      "lastVerified": "2026-08-26",
+      "verificationStatus": "verified"
+    },
+    {
+      "slug": "tata-elxsi",
+      "name": "Tata Elxsi",
+      "category": "hybrid",
+      "tagline": "AI-first design and technology services for digital transformation",
+      "description": "Tata Elxsi is a leading provider of design and technology services offering AI-first and design-led solutions for digital transformation. With 35+ years of expertise, the company helps global customers reimagine products and services through design thinking and cutting-edge digital technologies across automotive, aerospace, healthcare, and semiconductor sectors.",
+      "website": "https://www.tataelxsi.com",
+      "founded": "1989",
+      "hq": "Bengaluru, India",
+      "officeCities": ["Bengaluru", "Chennai", "Hyderabad", "Mumbai", "Pune", "Trivandrum"],
+      "officeCountries": ["India", "United States", "Canada", "United Kingdom", "Ireland", "Netherlands", "Germany", "France", "Spain", "Portugal", "Poland", "South Africa", "UAE", "Japan", "Malaysia"],
+      "totalOfficeLocations": "36+ locations worldwide",
+      "headcountGlobal": "13,000+",
+      "headcountNote": "Global workforce across design and technology centers; significant presence in India",
+      "domains": ["Design & Engineering Services", "Automotive", "Healthcare & Life Sciences", "Aerospace & Defence", "Semiconductor Design", "AI/ML", "Embedded Systems"],
+      "tags": ["MNC", "Public company", "35+ years", "Design-led"],
+      "products": ["DevStudio.ai - GenAI Platform for Automotive", "AnaTel™ - AI-Native Platform for Healthcare", "ViTel™ - Material Intelligence for Med-Tech", "Coalesce - XR Platform for Digital Twins", "NEURON - AI-led Network Transformation", "Scalable Fleet Intelligence"],
+      "services": ["Design & Engineering Services", "Software Development", "AI/GenAI Solutions", "IoT & Cloud Implementation", "Platform Development", "Embedded Product Design"],
+      "careersUrl": "https://www.tataelxsi.com/careers",
+      "linkedin": "https://www.linkedin.com/company/tataelxsi/",
+      "twitter": "https://twitter.com/tataelxsi",
+      "leadership": [
+        { "name": "Manoj Raghavan", "role": "CEO & Managing Director" },
+        { "name": "N. Ganapathy Subramaniam", "role": "Chairman" }
+      ],
+      "vision": "To deliver AI-first and design-led digital transformation solutions that help global enterprises reimagine their products and services.",
+      "lastVerified": "2026-08-27",
+      "verificationStatus": "verified",
+      "sources": [
+        { "label": "About Us", "url": "https://www.tataelxsi.com/about-us" },
+        { "label": "Careers", "url": "https://www.tataelxsi.com/careers" },
+        { "label": "Investors", "url": "https://www.tataelxsi.com/investors" },
+        { "label": "LinkedIn Company", "url": "https://www.linkedin.com/company/tataelxsi/" },
+        { "label": "Contact", "url": "https://www.tataelxsi.com/contact-form" }
+      ]
     }
   ]
 }
