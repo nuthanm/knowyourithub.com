@@ -10,6 +10,8 @@ on:
     paths:
       - data/companies.json
       - data/companies.example.json
+      - data/catalog.generated.json
+      - scripts/catalog-push-db.mjs
       - scripts/sync-companies-db.mjs
       - scripts/sanitize-public-data.mjs
       - scripts/migrate-verified-submissions.mjs
@@ -22,6 +24,8 @@ on:
     paths:
       - data/companies.json
       - data/companies.example.json
+      - data/catalog.generated.json
+      - scripts/catalog-push-db.mjs
       - scripts/sync-companies-db.mjs
       - scripts/sanitize-public-data.mjs
       - scripts/migrate-verified-submissions.mjs
