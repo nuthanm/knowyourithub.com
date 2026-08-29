@@ -1,6 +1,6 @@
 {
   "dataYear": 2026,
-  "catalogUpdated": "2026-08-28",
+  "catalogUpdated": "2026-08-29",
   "disclaimer": "Active community submissions awaiting review or in progress.",
   "companies": [
     {
@@ -107,88 +107,7 @@
       "lastVerified": "2026-08-26",
       "verificationStatus": "unverified"
     },
-    {
-      "slug": "sagility-india",
-      "name": "Sagility",
-      "category": "service",
-      "tagline": "Tech-led healthcare operations transformation partner",
-      "description": "Sagility is a tech-led, healthcare-focused business process optimization partner helping payers and providers deliver best-in-class operations and performance. With more than two decades of healthcare expertise, Sagility streamlines the work behind care—enhancing member and provider experiences, improving quality, and driving cost-effective clinical and financial outcomes.",
-      "website": "https://sagility.com",
-      "founded": "2003",
-      "hq": "Atlanta, Georgia, United States",
-      "officeCities": [
-        "Bengaluru",
-        "Chennai",
-        "Hyderabad",
-        "Mumbai",
-        "Indore",
-        "Coimbatore"
-      ],
-      "officeCountries": [
-        "United States",
-        "India",
-        "Philippines",
-        "Jamaica",
-        "Colombia"
-      ],
-      "totalOfficeLocations": "5 major delivery regions",
-      "locationsUrl": "https://sagility.com/about/locations/",
-      "headcountIndia": "15,000+",
-      "headcountGlobal": "48,500+",
-      "headcountNote": "Global headcount per About page (2026); India estimate based on operational scale across 6 major cities with significant delivery centers",
-      "domains": [
-        "Healthcare Services",
-        "Business Process Management",
-        "IT Services"
-      ],
-      "tags": [
-        "Public company",
-        "MNC",
-        "AI & Automation"
-      ],
-      "services": [
-        "Healthcare claims processing and optimization",
-        "Healthcare provider operations transformation",
-        "Healthcare payer BPM solutions",
-        "AI-powered healthcare automation",
-        "Healthcare workflow automation"
-      ],
-      "onsitePolicy": "Hybrid with onsite requirements; varies by role and location. Verify on careers page.",
-      "careersUrl": "https://career.sagilityhealth.com/us/en/usa-career",
-      "linkedin": "https://www.linkedin.com/company/sagility/",
-      "twitter": "https://x.com/SagilityHealth",
-      "leadership": [
-        {
-          "name": "Ramesh Gopalan",
-          "role": "Managing Director & Group CEO"
-        }
-      ],
-      "vision": "To simplify healthcare with smart, human-centered operations by combining deep domain expertise with modern technology to solve complex operational challenges.",
-      "lastVerified": "2026-08-28",
-      "verificationStatus": "verified",
-      "sources": [
-        {
-          "label": "About page",
-          "url": "https://sagility.com/about/"
-        },
-        {
-          "label": "Leadership page",
-          "url": "https://sagility.com/about/leadership/"
-        },
-        {
-          "label": "Office locations",
-          "url": "https://sagility.com/about/locations/"
-        },
-        {
-          "label": "Investor relations",
-          "url": "https://sagility.com/investor-relations/"
-        },
-        {
-          "label": "Careers page",
-          "url": "https://career.sagilityhealth.com/us/en/usa-career"
-        }
-      ]
-    },
+    
     {
       "slug": "kfin-technologies",
       "name": "KFin Technologies",
@@ -400,28 +319,76 @@
     {
       "slug": "orion-innovation",
       "name": "Orion Innovation",
-      "category": "unknown",
-      "tagline": "Profile is awaiting review",
-      "description": "This company profile is being reviewed before it is published as verified.",
-      "website": "https://www.orioninc.com/",
-      "hq": "Unknown",
+      "category": "service",
+      "tagline": "Data and AI-enabled software engineering for enterprise transformation",
+      "description": "Orion is a data and AI-enabled software engineering services partner that helps enterprises modernize digital transformation programs and accelerate business results. The company says it blends deep industry expertise, global delivery, and AI-driven engineering to build platforms and digital experiences for large organizations.",
+      "website": "https://www.orioninnovation.com/",
+      "hq": "Iselin, New Jersey, USA",
+      "officeCities": [
+        "Iselin",
+        "New York",
+        "Toronto",
+        "Mexico City",
+        "Columbus"
+      ],
+      "officeCountries": [
+        "United States",
+        "Canada",
+        "Mexico"
+      ],
+      "locationsUrl": "https://www.orioninnovation.com/contact-us/",
+      "contactUrl": "https://www.orioninnovation.com/contact-us/",
+      "headcountIndia": "2,300+",
+      "headcountGlobal": "6,000+",
+      "headcountNote": "Orion states 6,000+ global associates and 2,300+ associates in India & Asia Pacific on its careers page.",
       "domains": [
-        "Unknown"
+        "IT Services",
+        "Digital Transformation",
+        "AI Engineering"
       ],
       "tags": [
-        "Community request"
+        "Global delivery",
+        "Enterprise services"
+      ],
+      "products": [
+        "OI Nebula"
       ],
       "services": [
-        "Under review"
+        "AI",
+        "Data & Analytics",
+        "Cloud",
+        "Engineering",
+        "Experience Design",
+        "Cybersecurity"
       ],
+      "onsitePolicy": "Hybrid — role and site dependent; verify on careers page",
+      "careersUrl": "https://www.orioninnovation.com/careers/life-at-orion/",
+      "linkedin": "https://www.linkedin.com/company/orioninnovation/",
+      "twitter": "https://x.com/CurrentlyOrion",
+      "lastVerified": "2026-08-29",
+      "verificationStatus": "in_progress",
       "sources": [
         {
-          "label": "Community submission",
-          "url": "https://www.orioninc.com/"
+          "label": "Orion Innovation home",
+          "url": "https://www.orioninnovation.com/"
+        },
+        {
+          "label": "About us",
+          "url": "https://www.orioninnovation.com/about-us/"
+        },
+        {
+          "label": "Contact us",
+          "url": "https://www.orioninnovation.com/contact-us/"
+        },
+        {
+          "label": "Careers page",
+          "url": "https://www.orioninnovation.com/careers/life-at-orion/"
+        },
+        {
+          "label": "LinkedIn company page",
+          "url": "https://www.linkedin.com/company/orioninnovation/"
         }
-      ],
-      "lastVerified": "2026-08-26",
-      "verificationStatus": "unverified"
+      ]
     },
     {
       "slug": "brickred-systems",
