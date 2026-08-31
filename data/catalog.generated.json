@@ -41422,6 +41422,80 @@
           "url": "https://career.sagilityhealth.com/us/en/usa-career"
         }
       ]
+    },
+    {
+      "slug": "orion-innovation",
+      "name": "Orion Innovation",
+      "category": "service",
+      "tagline": "Data and AI-enabled software engineering for enterprise transformation",
+      "description": "Orion is a data and AI-enabled software engineering services partner that helps enterprises modernize digital transformation programs and accelerate business results. The company says it blends deep industry expertise, global delivery, and AI-driven engineering to build platforms and digital experiences for large organizations.",
+      "website": "https://www.orioninnovation.com/",
+      "hq": "Iselin, New Jersey, USA",
+      "officeCities": [
+        "Iselin",
+        "New York",
+        "Toronto",
+        "Mexico City",
+        "Columbus"
+      ],
+      "officeCountries": [
+        "United States",
+        "Canada",
+        "Mexico"
+      ],
+      "locationsUrl": "https://www.orioninnovation.com/contact-us/",
+      "contactUrl": "https://www.orioninnovation.com/contact-us/",
+      "headcountIndia": "2,300+",
+      "headcountGlobal": "6,000+",
+      "headcountNote": "Orion states 6,000+ global associates and 2,300+ associates in India & Asia Pacific on its careers page.",
+      "domains": [
+        "IT Services",
+        "Digital Transformation",
+        "AI Engineering"
+      ],
+      "tags": [
+        "Global delivery",
+        "Enterprise services"
+      ],
+      "products": [
+        "OI Nebula"
+      ],
+      "services": [
+        "AI",
+        "Data & Analytics",
+        "Cloud",
+        "Engineering",
+        "Experience Design",
+        "Cybersecurity"
+      ],
+      "onsitePolicy": "Hybrid — role and site dependent; verify on careers page",
+      "careersUrl": "https://www.orioninnovation.com/careers/life-at-orion/",
+      "linkedin": "https://www.linkedin.com/company/orioninnovation/",
+      "twitter": "https://x.com/CurrentlyOrion",
+      "lastVerified": "2026-08-29",
+      "verificationStatus": "verified",
+      "sources": [
+        {
+          "label": "Orion Innovation home",
+          "url": "https://www.orioninnovation.com/"
+        },
+        {
+          "label": "About us",
+          "url": "https://www.orioninnovation.com/about-us/"
+        },
+        {
+          "label": "Contact us",
+          "url": "https://www.orioninnovation.com/contact-us/"
+        },
+        {
+          "label": "Careers page",
+          "url": "https://www.orioninnovation.com/careers/life-at-orion/"
+        },
+        {
+          "label": "LinkedIn company page",
+          "url": "https://www.linkedin.com/company/orioninnovation/"
+        }
+      ]
     }
   ]
 }
