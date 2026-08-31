@@ -165,6 +165,7 @@ export function PipelineQueue() {
   const searchParams = useSearchParams();
   const staticEntries = useMemo(() => buildPipelineEntries(), []);
   const [communityEntries, setCommunityEntries] = useState<CompanySearchEntry[]>([]);
+  const [hasLoadedLiveQueue, setHasLoadedLiveQueue] = useState(false);
   const confirmedStatusUpdates = useRef(new Map<string, QueueStatusUpdate>());
   const [mailBanner, setMailBanner] = useState<{
     companyName: string;
@@ -212,7 +213,7 @@ export function PipelineQueue() {
         return (await res.json()) as { ok?: boolean; items?: QueueSubmissionItem[] };
       })
       .then((json) => {
-        if (!active || !json?.ok || !json.items?.length) return;
+        if (!active || !json?.ok || !json.items) return;
         setCommunityEntries(
           json.items
             .map(communityToEntry)
@@ -224,6 +225,7 @@ export function PipelineQueue() {
                 : entry;
             }),
         );
+        setHasLoadedLiveQueue(true);
       })
       .catch(() => undefined);
 
@@ -390,13 +392,14 @@ export function PipelineQueue() {
 
   const allEntries = useMemo(() => {
     const seen = new Set<string>();
-    const merged = [...communityEntries, ...staticEntries].filter((entry) => {
+    const sourceEntries = hasLoadedLiveQueue ? communityEntries : [...communityEntries, ...staticEntries];
+    const merged = sourceEntries.filter((entry) => {
       if (seen.has(entry.slug)) return false;
       seen.add(entry.slug);
       return true;
     });
     return merged.sort((a, b) => a.name.localeCompare(b.name));
-  }, [staticEntries, communityEntries]);
+  }, [staticEntries, communityEntries, hasLoadedLiveQueue]);
 
   const inProgressCount = allEntries.filter((entry) => entry.verificationStatus === "in_progress").length;
   const unverifiedCount = allEntries.filter((entry) => entry.verificationStatus === "unverified").length;

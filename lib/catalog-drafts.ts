@@ -51,8 +51,6 @@ async function readCatalog(): Promise<CatalogFile | null> {
     const raw = await readFile(CATALOG_PATH, "utf8");
     const catalog = JSON.parse(raw) as CatalogFile;
     if (!Array.isArray(catalog.companies)) return null;
-    // Do not accidentally overwrite the pre-migration catalog with queue records.
-    if (catalog.companies.some((company) => company.verificationStatus === "verified")) return null;
     return catalog;
   } catch {
     return null;
