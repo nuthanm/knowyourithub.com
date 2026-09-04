@@ -1,8 +1,216 @@
 {
   "dataYear": 2026,
-  "catalogUpdated": "2026-08-29",
+  "catalogUpdated": "2026-09-04",
   "disclaimer": "Active community submissions awaiting review or in progress.",
   "companies": [
+    {
+      "slug": "3i-infotech-ltd",
+      "name": "3i Infotech Ltd",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://www.3i-infotech.com/",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://www.3i-infotech.com/"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "intellect-design-arena",
+      "name": "Intellect Design Arena",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://intellect-design-arena.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://intellect-design-arena.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "datamatics-global-services",
+      "name": "Datamatics Global Services",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://datamatics-global-services.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://datamatics-global-services.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "3i-infotech",
+      "name": "3i Infotech",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://3i-infotech.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://3i-infotech.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "aurionpro-solutions",
+      "name": "Aurionpro Solutions",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://aurionpro-solutions.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://aurionpro-solutions.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "cdsl-ventures-limited-cvl",
+      "name": "CDSL Ventures Limited(CVL)",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://cdsl-ventures-limited-cvl.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://cdsl-ventures-limited-cvl.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "saksoft",
+      "name": "Saksoft",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://saksoft.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://saksoft.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
+    {
+      "slug": "happiest-minds-technologies",
+      "name": "Happiest Minds Technologies",
+      "category": "unknown",
+      "tagline": "Profile is awaiting review",
+      "description": "This company profile is being reviewed before it is published as verified.",
+      "website": "https://happiest-minds-technologies.com",
+      "hq": "Unknown",
+      "domains": [
+        "Unknown"
+      ],
+      "tags": [
+        "Community request"
+      ],
+      "services": [
+        "Under review"
+      ],
+      "sources": [
+        {
+          "label": "Community submission",
+          "url": "https://happiest-minds-technologies.com"
+        }
+      ],
+      "lastVerified": "2026-09-04",
+      "verificationStatus": "unverified"
+    },
     {
       "slug": "lxg-mold-tooling",
       "name": "LXG Mold Tooling",
@@ -26,7 +234,7 @@
           "url": "https://lxgmoldtooling.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -52,7 +260,7 @@
           "url": "https://lxginjectionmolding.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -78,7 +286,7 @@
           "url": "https://affle.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -104,10 +312,9 @@
           "url": "https://www.tatacommunications.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
-    
     {
       "slug": "kfin-technologies",
       "name": "KFin Technologies",
@@ -131,7 +338,7 @@
           "url": "https://kfin-technologies.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -157,7 +364,7 @@
           "url": "https://route-mobile.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -183,7 +390,7 @@
           "url": "https://indegene.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -209,7 +416,7 @@
           "url": "https://latentview-analytics.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -235,7 +442,7 @@
           "url": "https://eclerx-services.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -261,33 +468,7 @@
           "url": "https://kpit-technologies.com"
         }
       ],
-      "lastVerified": "2026-08-26",
-      "verificationStatus": "unverified"
-    },
-    {
-      "slug": "hyundai",
-      "name": "Hyundai",
-      "category": "unknown",
-      "tagline": "Profile is awaiting review",
-      "description": "This company profile is being reviewed before it is published as verified.",
-      "website": "https://hyundai.com",
-      "hq": "Unknown",
-      "domains": [
-        "Unknown"
-      ],
-      "tags": [
-        "Community request"
-      ],
-      "services": [
-        "Under review"
-      ],
-      "sources": [
-        {
-          "label": "Community submission",
-          "url": "https://hyundai.com"
-        }
-      ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -313,9 +494,9 @@
           "url": "https://elk-education-consultants-pvt-ltd.com"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
-    },    
+    },
     {
       "slug": "brickred-systems",
       "name": "BrickRed Systems",
@@ -339,7 +520,7 @@
           "url": "http://www.brickredsys.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     },
     {
@@ -365,7 +546,7 @@
           "url": "https://crossinghurdles.com/"
         }
       ],
-      "lastVerified": "2026-08-26",
+      "lastVerified": "2026-09-04",
       "verificationStatus": "unverified"
     }
   ]

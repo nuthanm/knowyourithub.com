@@ -163,11 +163,6 @@ export function shouldShowLocationsSection(company: CompanyProfile) {
   return false;
 }
 
-/** @deprecated use getOfficialPresenceLink */
-export function getLocationsLink(company: CompanyProfile) {
-  return getOfficialPresenceLink(company)?.url;
-}
-
 /** Provenance links only — omits URLs already shown under Quick links or Locations. */
 export function getCitationSources(company: CompanyProfile) {
   const excluded = getProfileQuickLinkUrls(company);
@@ -319,6 +314,3 @@ export function slugifyCompanyName(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 }
-
-/** @deprecated use COMPANIES */
-export const SAMPLE_COMPANIES = VERIFIED_COMPANIES;

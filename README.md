@@ -252,6 +252,126 @@ Helper scripts (examples):
 - scripts/merge-enrichments.mjs
 - scripts/fill-remaining-gaps.mjs
 
+## Email Templates and Notifications
+
+The project uses automated email notifications to keep submitters and subscribers informed about company profile updates through the submission workflow.
+
+### Email Templates Overview
+
+Email notifications are sent at three key workflow stages:
+
+#### 1. User Submission Acknowledgment
+**Sent to**: Original submitter  
+**Trigger**: When a company submission is first created  
+**Purpose**: Confirm receipt and provide submission reference
+
+![User submit a new company request - Acknowledge mail to user](Mail%20Images/User%20submit%20a%20new%20company%20request%20-%20Acknowledge%20mail%20to%20user.png)
+
+This email acknowledges the submitter's company profile contribution and confirms that their submission has been received and is awaiting review in the queue.
+
+#### 2. Owner Notification of Company Request
+**Sent to**: Maintainer/admin  
+**Trigger**: When a new company submission is queued  
+**Purpose**: Alert the team about pending reviews
+
+![Owner receives the company request](Mail%20Images/Owner%20receives%20the%20company%20request.png)
+
+This notification ensures maintainers are aware of new company submissions that require verification and validation against official sources.
+
+#### 3. Subscriber Notification on Verification
+**Sent to**: All active subscribers  
+**Trigger**: When a company profile is verified and published  
+**Purpose**: Inform subscribers about newly verified company data
+
+![Subscriber Receive when company is verified](Mail%20Images/Subscriber%20Receive%20when%20company%20is%20verified%20.png)
+
+This email notifies subscribers that a company profile has been thoroughly reviewed and verified, making it available in the searchable catalog.
+
+### Email Configuration
+
+Email templates are managed in [lib/email-templates.ts](lib/email-templates.ts) and sent via Nodemailer using SMTP configuration from environment variables:
+
+- `SMTP_HOST` — SMTP server address
+- `SMTP_PORT` — SMTP port (typically 587 or 465)
+- `SMTP_USER` — SMTP authentication username
+- `SMTP_PASSWORD` — SMTP authentication password
+- `SMTP_FROM` — Sender email address
+
+Email sending functions:
+- `sendNewSubmissionEmail()` — User acknowledgment
+- `sendOwnerNotificationEmail()` — Maintainer alert
+- `sendSubscriberNotificationEmail()` — Subscriber broadcast
+
+---
+
+## Data Quality & Audits
+
+The project maintains data quality through periodic audits and sync verification to ensure the catalog stays accurate and consistent across storage layers.
+
+### Audit Results
+
+Latest audit snapshot (`audit-results.json`):
+
+```json
+{
+  "totalCompanies": 109,
+  "reference": "astrazeneca",
+  "inSync": 108,
+  "outOfSync": 0,
+  "auditedAt": "2026-07-23",
+  "results": []
+}
+```
+
+**Audit Metrics**:
+- **Total Companies**: 109 company profiles in catalog
+- **In Sync**: 108 profiles verified and synchronized between DB and JSON files
+- **Out of Sync**: 0 discrepancies found
+- **Sync Status**: ✅ 99.08% (108/109) consistency across storage layers
+- **Last Audit**: July 23, 2026
+
+### Data Validation
+
+The project includes validation checks for:
+
+- Required fields presence (company name, category, website)
+- Domain format validation
+- URL validity and accessibility
+- Tag and service description completeness
+- Source link citation integrity
+- Verification status consistency
+
+### Sync Verification
+
+The codebase includes diagnostic utilities to verify data consistency:
+
+```bash
+# Check database storage counts
+npm run scripts/audit-company-storage.mjs
+
+# Test database connection and retrieve metadata
+npm run scripts/diagnose-company-storage-connection.mjs
+```
+
+These utilities help ensure:
+- PostgreSQL database connectivity
+- Accurate company profile counts
+- Metadata consistency between local JSON and database
+- No orphaned or duplicate records
+
+### Data Enrichment
+
+When adding or updating company profiles, use:
+
+```bash
+# Research company via Wikidata API
+node scripts/enrich-wikidata.mjs "Company Name" slug
+```
+
+This tool pulls structured data like founding year, official website, and company description from Wikidata and creates draft JSON files for manual review before integration.
+
+---
+
 ## Local Setup
 
 ```bash
