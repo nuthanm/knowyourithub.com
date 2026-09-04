@@ -68,7 +68,7 @@ export function CompanyDirectory({ companies }: { companies: CompanyProfile[] })
     [companySearchOptions, query],
   );
 
-  const effectiveQuery = selectedCompanySlug === "all" ? "" : query;
+  const effectiveQuery = query;
 
   const results = useMemo(() => {
     const filters = {
@@ -113,6 +113,7 @@ export function CompanyDirectory({ companies }: { companies: CompanyProfile[] })
                 <AppSelect
                   ariaLabel="Search by company"
                   value={selectedCompanySlug}
+                  onInputChange={setQuery}
                   onChange={(nextValue) => {
                     if (nextValue === "all") {
                       setQuery("");

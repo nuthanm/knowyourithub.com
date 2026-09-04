@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo } from "react";
-import Select, { type SingleValue } from "react-select";
+import Select, { type InputActionMeta, type SingleValue } from "react-select";
 
 export type AppSelectOption = {
   value: string;
@@ -14,6 +14,7 @@ type AppSelectProps = {
   ariaLabel?: string;
   value: string;
   onChange: (nextValue: string) => void;
+  onInputChange?: (nextValue: string) => void;
   options: AppSelectOption[];
   placeholder?: string;
   emptyValue?: string;
@@ -43,6 +44,7 @@ export function AppSelect({
   ariaLabel,
   value,
   onChange,
+  onInputChange,
   options,
   placeholder,
   emptyValue = "",
@@ -73,6 +75,10 @@ export function AppSelect({
       options={uniqueOptions}
       value={selectedOption}
       onChange={(next: SingleValue<AppSelectOption>) => onChange(next?.value ?? emptyValue)}
+      onInputChange={(nextValue: string, action: InputActionMeta) => {
+        if (action.action === "input-change") onInputChange?.(nextValue);
+        return nextValue;
+      }}
       placeholder={placeholder}
       isSearchable={isSearchable}
       isClearable={isClearable}
