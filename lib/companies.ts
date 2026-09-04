@@ -198,15 +198,18 @@ export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   unverified: "Awaiting review",
 };
 
-export const DATA_YEAR = pendingCatalog.dataYear;
-export const CATALOG_UPDATED = pendingCatalog.catalogUpdated;
-export const CATALOG_DISCLAIMER = pendingCatalog.disclaimer;
+const currentYear = new Date().getUTCFullYear();
+const currentDate = new Date().toISOString().slice(0, 10);
+
+export const DATA_YEAR = (pendingCatalog as any)?.dataYear ?? currentYear;
+export const CATALOG_UPDATED = (pendingCatalog as any)?.catalogUpdated ?? currentDate;
+export const CATALOG_DISCLAIMER = (pendingCatalog as any)?.disclaimer ?? "Company profiles are maintained and verified by Know Your IT Hub.";
 
 const catalogCompanies: CompanyProfile[] = [];
 const catalogSlugs = new Set(catalogCompanies.map((company) => company.slug));
-const pendingCompanies = (pendingCatalog.companies as CompanyProfile[]).filter(
+const pendingCompanies = ((pendingCatalog as any)?.companies as CompanyProfile[])?.filter(
   (company) => !catalogSlugs.has(company.slug),
-);
+) ?? [];
 
 export const COMPANIES: CompanyProfile[] = [...catalogCompanies, ...pendingCompanies];
 
