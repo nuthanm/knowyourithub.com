@@ -3,11 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  CATEGORY_COUNTS,
   CATEGORY_LABELS,
-  CATALOG_PROGRESS,
-  VERIFIED_COMPANIES,
   type CompanyCategory,
+  type CompanyProfile,
 } from "@/lib/companies";
 import { filterCompanies, getCompanyDomains, getCompanyLocations } from "@/lib/company-search";
 import { CompanyListRowFromEntry, CompanyTileFromEntry } from "@/components/CompanyCard";
@@ -24,25 +22,22 @@ const CATEGORY_OPTIONS: Array<{ id: CompanyCategory | "all"; label: string }> = 
   { id: "hybrid", label: "Hybrid" },
 ];
 
-const hasPipeline =
-  CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified > 0;
-
-export function CompanyDirectory() {
+export function CompanyDirectory({ companies }: { companies: CompanyProfile[] }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [category, setCategory] = useState<CompanyCategory | "all">("all");
   const [domain, setDomain] = useState("all");
   const [view, setView] = useState<ViewMode>("list");
 
-  const locations = useMemo(() => getCompanyLocations(VERIFIED_COMPANIES), []);
+  const locations = useMemo(() => getCompanyLocations(companies), [companies]);
   const domainSourceCompanies = useMemo(
     () =>
-      filterCompanies(VERIFIED_COMPANIES, {
+      filterCompanies(companies, {
         category,
         location: location === "all" ? undefined : location,
         domain,
       }),
-    [category, location, domain],
+    [companies, category, location, domain],
   );
 
   const domains = useMemo(() => getCompanyDomains(domainSourceCompanies), [domainSourceCompanies]);
@@ -83,7 +78,7 @@ export function CompanyDirectory() {
       domain,
     };
 
-    return filterCompanies(VERIFIED_COMPANIES, filters).map((company) => ({
+    return filterCompanies(companies, filters).map((company) => ({
       slug: company.slug,
       name: company.name,
       verificationStatus: company.verificationStatus,
@@ -94,7 +89,7 @@ export function CompanyDirectory() {
       tags: company.tags,
       profile: company,
     }));
-  }, [effectiveQuery, location, category, domain]);
+  }, [companies, effectiveQuery, location, category, domain]);
 
   const selectedDomainLabel =
     domain === "all" ? undefined : domains.find((item) => item.value === domain)?.label;
@@ -111,14 +106,6 @@ export function CompanyDirectory() {
     <div className="companies-page">
       <div className="companies-toolbar-sticky">
         <div className="companies-toolbar companies-toolbar-filters-only">
-          {hasPipeline && (
-            <p className="companies-toolbar-hint">
-              Filters below apply to the <strong>{CATEGORY_COUNTS.total} verified</strong> companies in this
-              directory. Header search can also find{" "}
-              <strong>{CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified}</strong> names still in our
-              verification queue.
-            </p>
-          )}
           <div className="companies-toolbar-controls">
             <div className="companies-toolbar-filters">
               <label className="filter-select-wrap companies-toolbar-search">
@@ -203,7 +190,7 @@ export function CompanyDirectory() {
           </div>
         </div>
         <p className="companies-results-bar">
-          Showing <strong>{results.length}</strong> of {CATEGORY_COUNTS.total} verified companies
+          Showing <strong>{results.length}</strong> of {companies.length} verified companies
           {hasQuery && <> · Search: {effectiveQuery.trim()}</>}
           {category !== "all" && <> · {CATEGORY_LABELS[category]}</>}
           {location !== "all" && <> · {location}</>}

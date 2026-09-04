@@ -1,11 +1,8 @@
-import catalog from "@/data/catalog.generated.json";
 import pendingCatalog from "@/data/companies.json";
-import pipeline from "@/data/pipeline.json";
 import {
   companyProfileToEntry,
   filterCompanies,
   filterCompanyEntries,
-  pipelineToEntry,
   type CompanySearchEntry,
 } from "./company-search";
 
@@ -188,18 +185,11 @@ export function companyMatchesLocation(
   return (company.officeCountries ?? []).some((country) => country.toLowerCase().includes(loc));
 }
 
-export type PipelineItem = {
-  name: string;
-  slug: string;
-  category?: CompanyCategory;
-  note: string;
-};
-
 export const CATEGORY_LABELS: Record<CompanyCategory, string> = {
   product: "Product-based",
   service: "Service-based",
   hybrid: "Hybrid",
-  unknown: "Uncategorized",
+  unknown: "",
 };
 
 export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
@@ -208,43 +198,17 @@ export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   unverified: "Awaiting review",
 };
 
-export const DATA_YEAR = catalog.dataYear;
-export const CATALOG_UPDATED = catalog.catalogUpdated;
-export const CATALOG_DISCLAIMER = catalog.disclaimer;
+export const DATA_YEAR = pendingCatalog.dataYear;
+export const CATALOG_UPDATED = pendingCatalog.catalogUpdated;
+export const CATALOG_DISCLAIMER = pendingCatalog.disclaimer;
 
-const catalogCompanies = catalog.companies as CompanyProfile[];
+const catalogCompanies: CompanyProfile[] = [];
 const catalogSlugs = new Set(catalogCompanies.map((company) => company.slug));
 const pendingCompanies = (pendingCatalog.companies as CompanyProfile[]).filter(
   (company) => !catalogSlugs.has(company.slug),
 );
 
 export const COMPANIES: CompanyProfile[] = [...catalogCompanies, ...pendingCompanies];
-
-function companyToPipelineItem(company: CompanyProfile): PipelineItem {
-  return {
-    name: company.name,
-    slug: company.slug,
-    category: company.category,
-    note: company.tagline || "Draft profile built — awaiting verification approval",
-  };
-}
-
-/** Merge queue file entries with draft profiles already in the catalog (deduped by slug). */
-function mergePipelineItems(jsonItems: PipelineItem[], fromCatalog: CompanyProfile[]): PipelineItem[] {
-  const slugs = new Set(jsonItems.map((item) => item.slug));
-  const extras = fromCatalog.filter((c) => !slugs.has(c.slug)).map(companyToPipelineItem);
-  return [...jsonItems, ...extras];
-}
-
-export const PIPELINE_IN_PROGRESS = mergePipelineItems(
-  pipeline.inProgress as PipelineItem[],
-  COMPANIES.filter((c) => c.verificationStatus === "in_progress"),
-);
-
-export const PIPELINE_UNVERIFIED = mergePipelineItems(
-  pipeline.unverified as PipelineItem[],
-  COMPANIES.filter((c) => c.verificationStatus === "unverified"),
-);
 
 function countByCategory(list: CompanyProfile[]) {
   const counts = { product: 0, service: 0, hybrid: 0, unknown: 0, total: 0 };
@@ -257,17 +221,7 @@ function countByCategory(list: CompanyProfile[]) {
 
 export const VERIFIED_COMPANIES = COMPANIES.filter((c) => c.verificationStatus === "verified");
 
-const allCatalogSlugs = new Set(COMPANIES.map((c) => c.slug));
-
-export const ALL_SEARCH_ENTRIES: CompanySearchEntry[] = [
-  ...COMPANIES.map(companyProfileToEntry),
-  ...PIPELINE_IN_PROGRESS.filter((item) => !allCatalogSlugs.has(item.slug)).map((item) =>
-    pipelineToEntry(item, "in_progress"),
-  ),
-  ...PIPELINE_UNVERIFIED.filter((item) => !allCatalogSlugs.has(item.slug)).map((item) =>
-    pipelineToEntry(item, "unverified"),
-  ),
-];
+export const ALL_SEARCH_ENTRIES: CompanySearchEntry[] = COMPANIES.map(companyProfileToEntry);
 
 export const ALL_COMPANY_SLUGS = ALL_SEARCH_ENTRIES.map((e) => e.slug);
 
@@ -275,10 +229,9 @@ export const CATEGORY_COUNTS = countByCategory(VERIFIED_COMPANIES);
 
 export const CATALOG_PROGRESS = {
   verified: VERIFIED_COMPANIES.length,
-  inProgress: PIPELINE_IN_PROGRESS.length,
-  unverified: PIPELINE_UNVERIFIED.length,
-  totalTracked:
-    VERIFIED_COMPANIES.length + PIPELINE_IN_PROGRESS.length + PIPELINE_UNVERIFIED.length,
+  inProgress: COMPANIES.filter((company) => company.verificationStatus === "in_progress").length,
+  unverified: COMPANIES.filter((company) => company.verificationStatus === "unverified").length,
+  totalTracked: COMPANIES.length,
 };
 
 export function getCompanyBySlug(slug: string) {

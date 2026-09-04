@@ -479,6 +479,27 @@ export async function listQueueSubmissions(submissionId?: string) {
 
 }
 
+export async function getQueueSubmissionCounts() {
+  const db = getSql();
+  if (!db) return { awaitingReview: 0, inProgress: 0 };
+
+  const rows = await db<Array<{ status: SubmissionQueueStatus; count: string }>>`
+    SELECT status, COUNT(*)::text AS count
+    FROM company_submissions
+    WHERE status = ANY(${ACTIVE_QUEUE_STATUSES})
+    GROUP BY status
+  `;
+
+  return rows.reduce(
+    (counts, row) => {
+      if (row.status === "in_progress") counts.inProgress = Number(row.count);
+      if (row.status === "awaiting_review") counts.awaitingReview = Number(row.count);
+      return counts;
+    },
+    { awaitingReview: 0, inProgress: 0 },
+  );
+}
+
 export async function updateSubmissionQueueStatus(input: {
   id: string;
   status: SubmissionQueueStatus;

@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import {
-  CATALOG_UPDATED,
-  CATEGORY_COUNTS,
   CATEGORY_LABELS,
-  DATA_YEAR,
-  VERIFIED_COMPANIES,
+  type CompanyCategory,
+  type CompanyProfile,
 } from "@/lib/companies";
 import { CatalogProgress } from "@/components/CatalogProgress";
 import { CategoryGuide } from "@/components/CategoryGuide";
@@ -26,24 +24,6 @@ import {
 
 const CATALOG_GOAL = 1000;
 
-const TRUST_FEATURES = [
-  {
-    title: "Verified manually",
-    body: "Human-verified, not auto-tagged.",
-    icon: IconShieldCheck,
-  },
-  {
-    title: "Job seeker first",
-    body: "Clarity before you apply.",
-    icon: IconTarget,
-  },
-  {
-    title: "Updated regularly",
-    body: `Live catalog · ${CATALOG_UPDATED}.`,
-    icon: IconRefresh,
-  },
-] as const;
-
 const TRUST_PILLARS = [
   {
     title: "Manual verification",
@@ -62,7 +42,7 @@ const TRUST_PILLARS = [
   },
 ] as const;
 
-function categoryClass(category: (typeof VERIFIED_COMPANIES)[number]["category"]) {
+function categoryClass(category: CompanyCategory) {
   if (category === "product") return "tag product";
   if (category === "service") return "tag service";
   if (category === "hybrid") return "tag hybrid";
@@ -74,9 +54,33 @@ function pct(part: number, total: number) {
   return `${((part / total) * 100).toFixed(1)}%`;
 }
 
-export function HomePage() {
-  const featured = VERIFIED_COMPANIES.slice(0, 3);
-  const verified = CATEGORY_COUNTS.total;
+type HomePageProps = {
+  companies: CompanyProfile[];
+  metadata: { dataYear: string | number; catalogUpdated: string };
+  queueCounts?: { awaitingReview: number; inProgress: number };
+};
+
+export function HomePage({
+  companies,
+  metadata,
+  queueCounts = { awaitingReview: 0, inProgress: 0 },
+}: HomePageProps) {
+  const verifiedCompanies = companies.filter((company) => company.verificationStatus === "verified");
+  const featured = verifiedCompanies.slice(0, 3);
+  const verified = verifiedCompanies.length;
+  const categoryCounts = verifiedCompanies.reduce(
+    (counts, company) => {
+      if (company.category !== "unknown") counts[company.category] += 1;
+      return counts;
+    },
+    { product: 0, service: 0, hybrid: 0 },
+  );
+  const { awaitingReview: unverified, inProgress } = queueCounts;
+  const trustFeatures = [
+    { title: "Verified manually", body: "Human-verified, not auto-tagged.", icon: IconShieldCheck },
+    { title: "Job seeker first", body: "Clarity before you apply.", icon: IconTarget },
+    { title: "Updated regularly", body: `Live catalog · ${metadata.catalogUpdated}.`, icon: IconRefresh },
+  ] as const;
   const goalPercent = Math.min(100, Math.round((verified / CATALOG_GOAL) * 100));
   const categoryTotal = Math.max(1, verified);
 
@@ -84,7 +88,7 @@ export function HomePage() {
     <div className="landing-page">
       <section className="landing-hero">
         <div className="landing-hero-copy">
-          <span className="landing-eyebrow">Company directory · {DATA_YEAR}</span>
+          <span className="landing-eyebrow">Company directory · {metadata.dataYear}</span>
           <h1>
             Know if a company is product or service{" "}
             <span>before you apply</span>
@@ -103,7 +107,7 @@ export function HomePage() {
             </Link>
           </div>
           <ul className="landing-trust-features" aria-label="Why Know Your IT Hub">
-            {TRUST_FEATURES.map(({ title, body, icon: Icon }) => (
+            {trustFeatures.map(({ title, body, icon: Icon }) => (
               <li key={title}>
                 <span className="landing-trust-feature-icon" aria-hidden="true">
                   <Icon size={18} />
@@ -142,24 +146,24 @@ export function HomePage() {
                 <IconPackage size={16} />
               </span>
               <span className="landing-panel-stat-label">Product</span>
-              <strong>{CATEGORY_COUNTS.product}</strong>
-              <em>{pct(CATEGORY_COUNTS.product, categoryTotal)}</em>
+              <strong>{categoryCounts.product}</strong>
+              <em>{pct(categoryCounts.product, categoryTotal)}</em>
             </div>
             <div className="is-service">
               <span className="landing-panel-stat-icon" aria-hidden="true">
                 <IconUsers size={16} />
               </span>
               <span className="landing-panel-stat-label">Service</span>
-              <strong>{CATEGORY_COUNTS.service}</strong>
-              <em>{pct(CATEGORY_COUNTS.service, categoryTotal)}</em>
+              <strong>{categoryCounts.service}</strong>
+              <em>{pct(categoryCounts.service, categoryTotal)}</em>
             </div>
             <div className="is-hybrid">
               <span className="landing-panel-stat-icon" aria-hidden="true">
                 <IconNodes size={16} />
               </span>
               <span className="landing-panel-stat-label">Hybrid</span>
-              <strong>{CATEGORY_COUNTS.hybrid}</strong>
-              <em>{pct(CATEGORY_COUNTS.hybrid, categoryTotal)}</em>
+              <strong>{categoryCounts.hybrid}</strong>
+              <em>{pct(categoryCounts.hybrid, categoryTotal)}</em>
             </div>
           </div>
           <Link href="/companies" className="landing-panel-cta">
@@ -203,9 +207,11 @@ export function HomePage() {
                 </div>
                 <p>{company.tagline}</p>
                 <div className="landing-company-card-meta">
-                  <span className={categoryClass(company.category)}>
-                    {CATEGORY_LABELS[company.category]}
-                  </span>
+                  {company.category !== "unknown" && (
+                    <span className={categoryClass(company.category)}>
+                      {CATEGORY_LABELS[company.category]}
+                    </span>
+                  )}
                   <span>{company.hq.split(",")[0]?.trim()}</span>
                 </div>
               </Link>
@@ -214,8 +220,13 @@ export function HomePage() {
         </ul>
       </section>
 
-      <DataNotice />
-      <CatalogProgress />
+      <DataNotice dataYear={metadata.dataYear} catalogUpdated={metadata.catalogUpdated} />
+      <CatalogProgress
+        verified={verified}
+        inProgress={inProgress}
+        unverified={unverified}
+        catalogUpdated={metadata.catalogUpdated}
+      />
 
       <section className="landing-cta">
         <div className="landing-cta-copy">

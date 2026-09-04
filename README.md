@@ -63,7 +63,6 @@ Core goal:
 ### Storage
 
 - PostgreSQL `company_profiles`, with one row per catalog company
-- data/catalog.generated.json as the build-time catalog cache pulled from PostgreSQL
 - data/companies.json for active portal submissions only (`awaiting_review` / `in_progress`)
 - Optional PostgreSQL storage for submissions
 - Local JSON-backed queue fallback for development; production review queues require PostgreSQL or Upstash Redis
@@ -75,7 +74,7 @@ Core goal:
 flowchart TB
   subgraph Frontend["Web App"]
     UI["Next.js App Router pages"]
-    DATA["Catalog read: data/catalog.generated.json"]
+    DATA["Catalog read: PostgreSQL company_profiles"]
   end
 
   subgraph APIs["Form and Queue APIs"]
@@ -120,15 +119,12 @@ Files involved:
 - [app/api/submissions/route.ts](app/api/submissions/route.ts) or the submit handler entry point
 - [lib/api/submit-handler.ts](lib/api/submit-handler.ts)
 - [lib/submissions.ts](lib/submissions.ts)
-- [lib/pending-queue-store.ts](lib/pending-queue-store.ts)
 - [lib/subscribers.ts](lib/subscribers.ts)
-- [data/companies.json](data/companies.json)
 
 Behavior:
 - A visitor submits an add or edit request from the portal.
 - The request is validated, sanitized, and checked for duplicate or already-known companies.
 - The record is inserted into the review queue (`company_submissions`) with status `awaiting_review`.
-- The same request also appears in the local pending queue JSON fallback or the DB-backed queue.
 - The item is shown on the review page as awaiting review until a maintainer confirms the record.
 - If the submitter opts in, their email is stored in `catalog_subscribers` and they receive the welcome email.
 
@@ -136,16 +132,14 @@ Behavior:
 
 Files involved:
 - [lib/submissions.ts](lib/submissions.ts)
-- [lib/catalog-drafts.ts](lib/catalog-drafts.ts)
 - [lib/email-templates.ts](lib/email-templates.ts)
 - [app/api/submissions/queue/status/route.ts](app/api/submissions/queue/status/route.ts)
 - [data/companies.json](data/companies.json)
-- [data/catalog.generated.json](data/catalog.generated.json)
 
 Behavior:
 - A maintainer opens the queue and updates the company record with verified details.
 - The queue status moves from `awaiting_review` to `in_progress`.
-- The code keeps the queue row active and syncs the draft record into the local queue/profile review file.
+- The code keeps the queue row active and synchronizes the draft record into PostgreSQL.
 - The profile stays in a pending state with `verificationStatus` set to `in_progress` until final verification is complete.
 - The notification email is sent only to the original submitter for `in_progress`, not to all subscribers.
 - This matches the handwritten flow from the note: it is a personal update to the submitter during verification.
@@ -156,15 +150,12 @@ Files involved:
 - [lib/submissions.ts](lib/submissions.ts)
 - [lib/email-templates.ts](lib/email-templates.ts)
 - [scripts/sync-companies-db.mjs](scripts/sync-companies-db.mjs)
-- [scripts/catalog-push-db.mjs](scripts/catalog-push-db.mjs)
-- [scripts/catalog-pull-db.mjs](scripts/catalog-pull-db.mjs)
-- [data/catalog.generated.json](data/catalog.generated.json)
 - [data/companies.json](data/companies.json)
 
 Behavior:
 - Once approval is complete, the queue item is set to `verified`.
 - The verified company is removed from the review queue and added to the published catalog.
-- The canonical profile is kept in PostgreSQL `company_profiles` and mirrored into the generated catalog used by the website.
+- The canonical profile is stored in PostgreSQL `company_profiles` and read directly by the website.
 - A broadcast email is sent to all active subscribers for the verified company update.
 - The URL should resolve to the final company details route such as `/companies/<slug>`.
 
@@ -239,7 +230,6 @@ The notification behavior is now aligned with the three flow stages described ab
 ## Company Data Process
 
 The canonical catalog is stored as one row per company in PostgreSQL `company_profiles`.
-`data/catalog.generated.json` is the build-time cache reconstructed from those rows.
 `data/companies.json` is intentionally small: it contains only active portal submissions that are
 awaiting review or in progress.
 
@@ -249,7 +239,7 @@ Typical workflow:
 2. Validate details against official sources.
 3. Set category, verification status, and source links.
 4. Update lastVerified and related metadata.
-5. Merge into catalog and deploy.
+5. Synchronize the verified profile to PostgreSQL.
 
 Helper scripts (examples):
 
@@ -438,21 +428,16 @@ curl -X POST http://localhost:3000/api/submissions/queue/status \
 - Local-only queue fallback: JSON file storage when neither persistence provider is configured
 - Optional API hardening: ADMIN_API_KEY and CORS origins
 - Review queue moderation: set REVIEW_QUEUE_PASSCODE (or use ADMIN_API_KEY as its fallback)
-- Optional strict deployment gate: CATALOG_DB_REQUIRED=1
 
 ## Local-to-DB sync and deployment sync
 
 ### Local sync model
 
-The project uses two layers:
-
-1. Local JSON files for rapid local dev and fallback persistence
-2. PostgreSQL for durable catalog and queue state in production or when DATABASE_URL is configured
+The published catalog is read directly from PostgreSQL. Local JSON files are used only for review-queue drafts and public development samples.
 
 The local files are:
 
 - `data/companies.json` — active queue/profile draft entries and pending review entries
-- `data/catalog.generated.json` — published catalog snapshot used by the app
 - `data/pending.json` — fallback queue used when DB is not available
 
 The DB tables are:
@@ -462,47 +447,20 @@ The DB tables are:
 - `catalog_subscribers` — subscriber email list
 - `company_catalog_metadata` — catalog snapshot metadata
 
-### How sync works
-
-#### Pull latest DB data into local files
-
-```bash
-npm run catalog:pull-db
-```
-
-This pulls the latest `company_profiles` rows into `data/catalog.generated.json`.
-
-If you want the build to fail when the DB catalog is missing, use:
-
-```bash
-CATALOG_DB_REQUIRED=1 npm run catalog:pull-db:required
-```
-
-#### Push local catalog to DB
-
-```bash
-npm run catalog:push-db
-```
-
-This writes the content from `data/catalog.generated.json` or the legacy `data/companies.json` file into PostgreSQL `company_profiles` and updates `company_catalog_metadata`.
-
-#### Sync the queue and catalog state after verification
+### Sync review queue state after verification
 
 ```bash
 npm run companies:sync-db
 ```
 
-This syncs the verified catalog rows into `company_profiles` and marks matching submissions in `company_submissions` as `verified`.
+This syncs verified draft rows into `company_profiles` and marks matching submissions in `company_submissions` as `verified`. Published pages read `company_profiles` directly.
 
 ### After pushing changes to the repo
 
 1. Push the branch to GitHub.
 2. Deploy to Vercel.
-3. On deploy, the app runs `prebuild` which calls `scripts/catalog-pull-db.mjs --build`.
-4. If `DATABASE_URL` is configured and `CATALOG_PULL_ON_BUILD=true`, the build pulls the latest published catalog snapshot into `data/catalog.generated.json`.
-5. The deployed app reads the pull result and serves the latest verified profile data.
-
-This means the production app is consistently driven by the DB-backed catalog, while local dev can operate from the JSON fallback when the DB is missing or intentionally disabled.
+3. Configure `DATABASE_URL` in the deployment environment.
+4. The deployed app reads the latest verified profile data directly from `company_profiles`.
 
 ### Recommended local workflow for maintainers
 
@@ -519,23 +477,17 @@ Then:
 - change the queue status from `awaiting_review` to `in_progress`
 - verify it as `verified`
 - run `npm run companies:sync-db` to ensure DB and catalog data remain in sync
-- push the branch and redeploy when you want the public site to pick up the latest catalog snapshot
+- push the branch and redeploy application code when necessary; catalog data is served directly from the database
 
 Catalog sync commands:
 
 - npm run catalog:migrate-to-rows (one-time, backup-first migration from the legacy catalog)
-- npm run catalog:push-db
-- npm run catalog:pull-db
-- npm run catalog:pull-db:required
 - npm run companies:sync-db
 
 Build behavior:
 
-- npm run build runs prebuild automatically.
-- prebuild executes catalog pull from DB when DATABASE_URL is configured.
-- If DB is not configured or `company_profiles` is missing, pull is skipped (non-breaking).
-- If data/catalog.generated.json is missing, prebuild auto-creates it from data/companies.example.json.
-- If CATALOG_DB_REQUIRED=1, build fails when the row-based catalog pull cannot complete.
+- `npm run build` does not create or refresh a catalog cache.
+- Production deployments require `DATABASE_URL` for published catalog data.
 
 Catalog row schema:
 
@@ -551,20 +503,18 @@ Pull request database sync workflow:
 - Sequence inside `sync:workflow`:
   - `npm run submissions:migrate-verified`
   - `npm run companies:sync-db`
-  - `npm run queue:sync-json`
-  - `npm run catalog:pull-db`
   - `npm run public:sanitize-data`
 
 Required pipeline secrets/env for full DB-backed generation:
 
-- `DATABASE_URL` (required for DB sync/migration/pull)
+- `DATABASE_URL` (required for published catalog reads and DB sync/migration)
 - `NEXT_PUBLIC_SITE_URL` (recommended for generated links)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (required only if email delivery is expected during sync)
 
 Notes:
 
 - If `DATABASE_URL` is missing, DB-dependent steps will fail or skip depending on script behavior.
-- `npm run build` still executes `prebuild`; that path now refreshes queue JSON and optionally pulls catalog from DB when `CATALOG_PULL_ON_BUILD=true`.
+- `npm run build` reads no catalog data from local JSON files.
 
 ## Data Visibility and Private Catalog Guidance
 
@@ -579,7 +529,7 @@ If your catalog must stay private, use this approach:
 
 Current repository note:
 
-- This codebase reads verified profiles from data/catalog.generated.json and active review entries from data/companies.json.
+- This codebase reads verified profiles from PostgreSQL `company_profiles` and active review entries from data/companies.json.
 - To fully hide catalog content from public viewers, you must stop tracking sensitive data files and publish only sanitized data.
 
 ### Zero-Downtime rollout (recommended)
@@ -588,8 +538,8 @@ Current repository note:
   - Run db/catalog.sql on production PostgreSQL.
 2. Push current catalog snapshot to DB:
   - npm run catalog:push-db
-3. Set production env CATALOG_DB_REQUIRED=1.
-4. Deploy application (prebuild pulls active snapshot into data/companies.json at build time).
+3. Configure production `DATABASE_URL`.
+4. Deploy application.
 5. Validate catalog pages and search in production.
 6. After validation, remove tracked catalog from git history policy:
   - Keep data/companies.json gitignored.
@@ -598,7 +548,7 @@ Current repository note:
 For local/public development without private data:
 
 - Keep data/companies.example.json in repo.
-- prebuild will use it only when data/companies.json is absent.
+- it is used only to generate sanitized development data.
 
 This order avoids downtime because existing app behavior remains unchanged while source-of-truth transitions to DB.
 

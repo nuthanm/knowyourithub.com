@@ -24,7 +24,7 @@ PostgreSQL is the source of truth for requests and profiles.
 
 | Stage | Storage | Required outcome |
 | --- | --- | --- |
-| New portal or mail request | `company_submissions` | Create an `awaiting_review` request only. Do not write a queue entry to `data/companies.json` or `data/pipeline.json`. |
+| New portal or mail request | `company_submissions` | Create an `awaiting_review` request only. Do not write a queue entry to `data/companies.json`. |
 | Research | `company_profiles` and temporary local payload | Check for an existing request/profile first, research official sources, synchronize the complete profile as `in_progress`, and retain the request as `in_progress`. |
 | Publish | `company_profiles` | Synchronize the profile as `verified`, then remove the matching `company_submissions` row. |
 

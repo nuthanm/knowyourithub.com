@@ -16,7 +16,7 @@ description: >-
 
 ## Before starting
 
-1. Run `node scripts/find-company-request.mjs "Company Name"` first. It queries PostgreSQL by name and slug in `company_submissions` and `company_profiles`. Do not use `data/companies.json` or `data/pipeline.json` for duplicate or queue checks.
+1. Run `node scripts/find-company-request.mjs "Company Name"` first. It queries PostgreSQL by name and slug in `company_submissions` and `company_profiles`. Do not use `data/companies.json` for duplicate or queue checks.
 2. If `company_profiles.verification_status` is `verified`, tell the user and offer to update fields instead.
 3. If `company_submissions.status` is `awaiting_review` or `in_progress`, continue the research workflow for that request. If a matching profile is already `in_progress`, use its payload as the starting point.
 
@@ -163,7 +163,7 @@ For an existing UI or mail request, read its `company_submissions` row. New manu
 "status": "awaiting_review"
 ```
 
-Do not add submission requests to `data/companies.json`, `data/pipeline.json`, or pending JSON. The Review Soon page reads only `company_submissions` rows with `awaiting_review` or `in_progress`.
+Do not add submission requests to `data/companies.json` or pending JSON. The Review Soon page reads only `company_submissions` rows with `awaiting_review` or `in_progress`.
 
 ### Step 2 — Research and synchronize an in-progress profile
 
@@ -292,7 +292,7 @@ Copy structure and tone from existing entries in `data/companies.json`:
 - [ ] `onsitePolicy` phrased cautiously ("Hybrid — verify on careers page")
 - [ ] No duplicate URLs across `sources` and quick links (app dedupes automatically)
 - [ ] Database lookup completed for matching `company_submissions` and `company_profiles` rows
-- [ ] UI/mail request was not written to `data/companies.json` or `data/pipeline.json`
+- [ ] UI/mail request was not written to `data/companies.json`
 - [ ] Temporary `data/companies.json` entry was removed after the in-progress or verified DB sync
 - [ ] **Leadership:** main founder role uses `"Founder"` (not `"Co-founder"`); CEO/COO/CTO only when officially listed
 - [ ] **Leadership:** roles reflect current titles, not outdated press coverage

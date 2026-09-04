@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import Select, { type SingleValue } from "react-select";
 
 export type AppSelectOption = {
@@ -52,6 +52,8 @@ export function AppSelect({
   size = "default",
   className,
 }: AppSelectProps) {
+  const generatedId = useId().replace(/:/g, "");
+  const selectId = inputId ?? `app-select-${generatedId}`;
   const uniqueOptions = useMemo(() => dedupeOptions(options), [options]);
 
   const selectedOption = useMemo(
@@ -63,8 +65,8 @@ export function AppSelect({
 
   return (
     <Select<AppSelectOption, false>
-      inputId={inputId}
-      instanceId={inputId}
+      inputId={selectId}
+      instanceId={selectId}
       aria-label={ariaLabel}
       className={className}
       classNamePrefix="app-select"

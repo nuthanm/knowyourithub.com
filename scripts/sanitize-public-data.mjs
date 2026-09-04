@@ -6,7 +6,6 @@ const root = process.cwd();
 
 const companiesPath = resolve(root, "data", "companies.json");
 const companiesExamplePath = resolve(root, "data", "companies.example.json");
-const pipelinePath = resolve(root, "data", "pipeline.json");
 
 const removablePaths = [
   resolve(root, "data", "companies.private.json"),
@@ -40,15 +39,6 @@ async function sanitizeCompaniesJson() {
   console.log("Sanitized data/companies.json using data/companies.example.json");
 }
 
-async function sanitizePipelineJson() {
-  const payload = {
-    inProgress: [],
-    unverified: [],
-  };
-  await writeFile(pipelinePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  console.log("Cleared data/pipeline.json");
-}
-
 async function removeOptionalDataFiles() {
   for (const target of removablePaths) {
     if (await pathExists(target)) {
@@ -60,7 +50,6 @@ async function removeOptionalDataFiles() {
 
 async function main() {
   await sanitizeCompaniesJson();
-  await sanitizePipelineJson();
   await removeOptionalDataFiles();
 }
 

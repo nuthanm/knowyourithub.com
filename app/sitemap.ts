@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { COMPANIES, CATALOG_UPDATED } from "@/lib/companies";
 import { getSiteUrl } from "@/lib/site-meta";
+import { getCatalogCompanies, getCatalogMetadata } from "@/lib/catalog-db";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "", changeFrequency: "weekly", priority: 1 },
@@ -22,9 +22,10 @@ function toUrl(base: string, path: string) {
   return `${base}${normalized === "/" ? "/" : normalized}`;
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl("https://knowyourithub.com");
-  const catalogDate = new Date(CATALOG_UPDATED);
+  const [companies, metadata] = await Promise.all([getCatalogCompanies(), getCatalogMetadata()]);
+  const catalogDate = new Date(metadata.catalogUpdated);
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map(({ path, changeFrequency, priority }) => ({
     url: toUrl(base, path),
@@ -33,7 +34,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority,
   }));
 
-  const companyEntries: MetadataRoute.Sitemap = COMPANIES.filter(
+  const companyEntries: MetadataRoute.Sitemap = companies.filter(
     (company) => company.verificationStatus === "verified",
   ).map((company) => ({
     url: toUrl(base, `/companies/${company.slug}`),

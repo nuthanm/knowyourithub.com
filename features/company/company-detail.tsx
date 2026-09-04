@@ -110,7 +110,9 @@ export function CompanyDetail({ company }: { company: CompanyProfile }) {
         <div className="profile-hero-main">
           <div className="profile-hero-badges">
             <VerifiedStamp size="md" />
-            <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+            {company.category !== "unknown" && (
+              <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+            )}
           </div>
           <h1>{company.name}</h1>
           <p className="profile-tagline">{company.tagline}</p>

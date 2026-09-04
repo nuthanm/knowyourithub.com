@@ -84,7 +84,9 @@ export function CompanyTile({ company }: { company: CompanyProfile }) {
         <VerificationStatusTag status="verified" size="sm" />
       </div>
       <div className="company-tile-meta">
-        <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+        {company.category !== "unknown" && (
+          <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+        )}
         <span className="company-tile-loc">{company.hq}</span>
       </div>
       <div className="tag-row">
@@ -105,7 +107,9 @@ export function CompanyListRow({ company }: { company: CompanyProfile }) {
         <div className="company-list-title">
           <h2>{company.name}</h2>
           <VerificationStatusTag status="verified" size="sm" />
-          <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+          {company.category !== "unknown" && (
+            <span className={categoryClass(company.category)}>{CATEGORY_LABELS[company.category]}</span>
+          )}
         </div>
         <p className="company-list-tagline">{company.tagline}</p>
         <div className="company-list-tags">

@@ -1,11 +1,18 @@
 import Link from "next/link";
-import { CATALOG_PROGRESS, CATALOG_UPDATED } from "@/lib/companies";
 import { VerificationStatusTag } from "@/components/VerificationStatusTag";
 
-export function CatalogProgress() {
-  const hasPipeline = CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified > 0;
+type CatalogProgressProps = {
+  verified: number;
+  inProgress: number;
+  unverified: number;
+  catalogUpdated: string;
+};
+
+export function CatalogProgress({ verified, inProgress, unverified, catalogUpdated }: CatalogProgressProps) {
+  const hasPipeline = inProgress + unverified > 0;
+  const totalTracked = verified + inProgress + unverified;
   const verifiedPercent = hasPipeline
-    ? Math.round((CATALOG_PROGRESS.verified / CATALOG_PROGRESS.totalTracked) * 100)
+    ? Math.round((verified / totalTracked) * 100)
     : 100;
 
   return (
@@ -17,15 +24,15 @@ export function CatalogProgress() {
           <p>
             {hasPipeline ? (
               <>
-                We show our work. Only <strong>{CATALOG_PROGRESS.verified} verified</strong> companies
+                We show our work. Only <strong>{verified} verified</strong> companies
                 have full profiles today. Search also surfaces{" "}
-                <strong>{CATALOG_PROGRESS.inProgress + CATALOG_PROGRESS.unverified}</strong> names still
+                <strong>{inProgress + unverified}</strong> names still
                 in our review queue — clearly labelled, not presented as verified.
               </>
             ) : (
               <>
                 Every company listed here is <strong>manually verified</strong> against official sources.
-                We currently publish <strong>{CATALOG_PROGRESS.verified} full profiles</strong> — no
+                We currently publish <strong>{verified} full profiles</strong> — no
                 placeholder or draft listings.
               </>
             )}
@@ -34,7 +41,7 @@ export function CatalogProgress() {
         <div className="catalog-progress-meter" aria-label={`${verifiedPercent}% verified`}>
           <div className="catalog-progress-ring">
             <div className="catalog-progress-ring-inner">
-              <strong>{CATALOG_PROGRESS.verified}</strong>
+              <strong>{verified}</strong>
               <span>{hasPipeline ? "verified" : "live profiles"}</span>
             </div>
           </div>
@@ -45,8 +52,8 @@ export function CatalogProgress() {
           )}
           <p>
             {hasPipeline
-              ? `${CATALOG_PROGRESS.verified} of ${CATALOG_PROGRESS.totalTracked} tracked · updated ${CATALOG_UPDATED}`
-              : `All verified · updated ${CATALOG_UPDATED}`}
+              ? `${verified} of ${totalTracked} tracked · updated ${catalogUpdated}`
+              : `All verified · updated ${catalogUpdated}`}
           </p>
         </div>
       </div>
@@ -54,7 +61,7 @@ export function CatalogProgress() {
       <div className={`catalog-stat-row${hasPipeline ? "" : " catalog-stat-row-compact"}`}>
         <Link href="/companies" className="catalog-stat verified catalog-stat-tile">
           <VerificationStatusTag status="verified" size="sm" />
-          <strong>{CATALOG_PROGRESS.verified}</strong>
+          <strong>{verified}</strong>
           <h3>Verified</h3>
           <p>Live with official source links</p>
           <span className="catalog-stat-cta">Browse directory →</span>
@@ -63,14 +70,14 @@ export function CatalogProgress() {
           <>
             <Link href="/coming-soon" className="catalog-stat in-progress catalog-stat-tile">
               <VerificationStatusTag status="in_progress" size="sm" />
-              <strong>{CATALOG_PROGRESS.inProgress}</strong>
+              <strong>{inProgress}</strong>
               <h3>In progress</h3>
               <p>Being checked on official pages</p>
               <span className="catalog-stat-cta">View queue →</span>
             </Link>
             <Link href="/coming-soon" className="catalog-stat unverified catalog-stat-tile">
               <VerificationStatusTag status="unverified" size="sm" />
-              <strong>{CATALOG_PROGRESS.unverified}</strong>
+              <strong>{unverified}</strong>
               <h3>Awaiting review</h3>
               <p>Not published until validated</p>
               <span className="catalog-stat-cta">View queue →</span>

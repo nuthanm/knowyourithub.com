@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import nodemailer from "nodemailer";
 import postgres from "postgres";
@@ -12,19 +12,9 @@ if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
   process.exit(0);
 }
 
-const generatedCatalogPath = resolve(process.cwd(), "data", "catalog.generated.json");
 const companiesJsonPath = resolve(process.cwd(), "data", "companies.json");
 
-// companies.json is a temporary researched-profile handoff; the generated catalog is the fallback.
-let catalogPath;
-try {
-  await access(companiesJsonPath);
-  catalogPath = companiesJsonPath;
-  console.log("Using data/companies.json as temporary researched-profile input");
-} catch {
-  catalogPath = generatedCatalogPath;
-  console.log("Using data/catalog.generated.json as source (generated from DB)");
-}
+console.log("Using data/companies.json as temporary researched-profile input");
 
 function normalizeStatus(value) {
   if (value === "verified" || value === "in_progress" || value === "unverified") return value;
@@ -58,7 +48,7 @@ function isValidEmail(value) {
   return /.+@.+\..+/.test(email);
 }
 
-const raw = await readFile(catalogPath, "utf8");
+const raw = await readFile(companiesJsonPath, "utf8");
 const catalog = JSON.parse(raw);
 if (!catalog || !Array.isArray(catalog.companies)) {
   throw new Error("Company data file must contain companies[] array");

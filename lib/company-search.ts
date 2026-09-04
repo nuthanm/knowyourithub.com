@@ -2,7 +2,6 @@ import {
   companyMatchesLocation,
   type CompanyCategory,
   type CompanyProfile,
-  type PipelineItem,
   type VerificationStatus,
 } from "./companies";
 
@@ -46,7 +45,7 @@ export type CompanySearchEntry = {
   note?: string;
   /** Full profile when verified */
   profile?: CompanyProfile;
-  /** Portal submission not yet merged into pipeline.json */
+  /** Portal submission not yet represented by a full company profile */
   communityRequest?: boolean;
   submissionId?: string;
 };
@@ -62,20 +61,6 @@ export function companyProfileToEntry(company: CompanyProfile): CompanySearchEnt
     domains: company.domains,
     tags: company.tags,
     profile: company,
-  };
-}
-
-export function pipelineToEntry(
-  item: PipelineItem,
-  verificationStatus: "in_progress" | "unverified",
-): CompanySearchEntry {
-  return {
-    slug: item.slug,
-    name: item.name,
-    verificationStatus,
-    category: item.category ?? "unknown",
-    tagline: item.note,
-    note: item.note,
   };
 }
 

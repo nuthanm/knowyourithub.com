@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { CompanyDirectory } from "@/features/companies/company-directory";
+import { getCatalogCompanies } from "@/lib/catalog-db";
 
 export const metadata = {
   title: "Companies — Know Your IT Hub",
@@ -7,7 +8,13 @@ export const metadata = {
     "Browse verified product-based and service-based companies. Filter by location, type, and industry.",
 };
 
-export default function CompaniesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CompaniesPage() {
+  const companies = (await getCatalogCompanies()).filter(
+    (company) => company.verificationStatus === "verified",
+  );
+
   return (
     <AppShell active="companies" wide>
       <div className="companies-page-header">
@@ -17,7 +24,7 @@ export default function CompaniesPage() {
           view.
         </p>
       </div>
-      <CompanyDirectory />
+      <CompanyDirectory companies={companies} />
     </AppShell>
   );
 }
