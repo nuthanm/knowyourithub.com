@@ -69,10 +69,10 @@ export function CompanySubmissionForm({
     setValue("formStartedAt", Date.now());
   }, [setValue]);
 
-  useEffect(() => {
+  function resetAvailability() {
     setAvailability("idle");
     setAvailabilityMessage("");
-  }, [companyName, requestType]);
+  }
 
   function clearDisplayedErrors() {
     setStatus("idle");
@@ -251,11 +251,11 @@ export function CompanySubmissionForm({
         <legend>Request type</legend>
         <div className="radio-group">
           <label className="radio-pill">
-            <input type="radio" value="add" {...register("requestType")} />
+            <input type="radio" value="add" {...register("requestType", { onChange: resetAvailability })} />
             Add a new company
           </label>
           <label className="radio-pill">
-            <input type="radio" value="edit" {...register("requestType")} />
+            <input type="radio" value="edit" {...register("requestType", { onChange: resetAvailability })} />
             Edit an existing company
           </label>
         </div>
@@ -268,7 +268,7 @@ export function CompanySubmissionForm({
             <input
               id="companyName"
               type="text"
-              {...register("companyName")}
+              {...register("companyName", { onChange: resetAvailability })}
               placeholder="e.g. Razorpay"
               autoComplete="organization"
             />
@@ -303,6 +303,7 @@ export function CompanySubmissionForm({
                 value={field.value ?? ""}
                 onChange={(slug) => {
                   field.onChange(slug);
+                  resetAvailability();
                   const company = COMPANIES.find((entry) => entry.slug === slug);
                   setValue("companyName", company?.name ?? "", { shouldValidate: true });
                 }}

@@ -14,6 +14,11 @@ Know your company type before you apply.
 
 Site: https://knowyourithub.com
 
+## Contribution Standards
+
+Repository standards for data verification, the database-first review workflow, API security,
+accessibility, and validation are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ![Know Your IT Hub hero section showing verified company directory and career research intent](https://github.com/user-attachments/assets/95a828da-bd92-4d42-8340-67266dde76f4)
 
 ## Purpose
