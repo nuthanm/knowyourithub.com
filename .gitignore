@@ -337,7 +337,6 @@ data/pipeline.private.json
 # Private mode: keep real catalog out of public git history.
 # NOTE: if data/companies.json is already tracked, run:
 #   git rm --cached data/companies.json
-data/companies.json
 
 # Reference clone (local only)
 _yieldproof-ref/
