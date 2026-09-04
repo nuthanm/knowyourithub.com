@@ -1,5 +1,5 @@
 import { jsonResponse, corsPreflightResponse } from "@/lib/api/cors";
-import { verifyMailBannerToken } from "@/lib/security/queue-token";
+import { verifyMailBannerToken, verifyQueueModerationToken } from "@/lib/security/queue-token";
 import { listQueueSubmissions } from "@/lib/submissions";
 
 export async function OPTIONS(request: Request) {
@@ -9,6 +9,7 @@ export async function OPTIONS(request: Request) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const bannerToken = url.searchParams.get("banner");
+  const moderationToken = url.searchParams.get("moderate");
   const noStore = { headers: { "Cache-Control": "no-store" } };
 
   // Mail-only banner check: used by coming-soon to show "<Company> added in the queue"
@@ -35,7 +36,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const items = await listQueueSubmissions();
+    const moderation = moderationToken ? verifyQueueModerationToken(moderationToken) : null;
+    if (moderationToken && !moderation) {
+      return jsonResponse({ ok: false, error: "Moderation link is invalid or expired." }, request, { status: 401, ...noStore });
+    }
+    const items = await listQueueSubmissions(moderation?.submissionId);
     return jsonResponse({ ok: true, items }, request, noStore);
   } catch {
     return jsonResponse(

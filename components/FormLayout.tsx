@@ -1,5 +1,5 @@
 type FormPageHeaderProps = {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   lead: React.ReactNode;
 };
@@ -7,7 +7,7 @@ type FormPageHeaderProps = {
 export function FormPageHeader({ eyebrow, title, lead }: FormPageHeaderProps) {
   return (
     <header className="form-page-header">
-      <p className="eyebrow">{eyebrow}</p>
+      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h1 className="page-title">{title}</h1>
       <div className="page-lead">{lead}</div>
     </header>

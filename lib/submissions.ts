@@ -1,11 +1,6 @@
 import postgres from "postgres";
 import {
-  ALL_COMPANY_SLUGS,
-  COMPANIES,
-  PIPELINE_IN_PROGRESS,
-  PIPELINE_UNVERIFIED,
   slugifyCompanyName,
-  VERIFIED_COMPANIES,
 } from "./companies";
 import { buildAdminEmail, buildUserConfirmationEmail } from "./email-templates";
 import { buildQueueStageBroadcastEmail, buildSubmissionRejectedEmail } from "./email-templates";
@@ -18,16 +13,24 @@ import {
 import { listSubscribers } from "./subscribers";
 import type { SubmissionInput } from "./validators";
 import { getQueueStageNotificationTarget } from "./email-templates";
+import { loadServerEnv } from "./server-env";
 
 let sql: ReturnType<typeof postgres> | null = null;
 
-const STATIC_PIPELINE_SLUGS = new Set([
-  ...PIPELINE_IN_PROGRESS.map((item) => item.slug),
-  ...PIPELINE_UNVERIFIED.map((item) => item.slug),
-]);
-
 function normalizeCompanyKey(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "").trim();
+}
+
+function normalizeCompanyIdentity(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\b(private|pvt|limited|ltd|llp|incorporated|inc|corp|corporation|plc)\b\.?/g, " ")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function getCompanyIdentitySql(column: string) {
+  return `regexp_replace(regexp_replace(lower(${column}), '\\m(private|pvt|limited|ltd|llp|incorporated|inc|corp|corporation|plc)\\M\\.?', '', 'g'), '[^a-z0-9]+', '', 'g')`;
 }
 
 function splitCompanyNameTokens(value: string) {
@@ -68,6 +71,8 @@ function getCompanyAliasKeys(name: string, slug: string, website?: string) {
   add(name);
   add(slug);
   add(getWebsiteHostKey(website));
+  add(normalizeCompanyIdentity(name));
+  add(normalizeCompanyIdentity(slug));
 
   const tokens = splitCompanyNameTokens(name);
   if (tokens.length > 1) {
@@ -83,8 +88,6 @@ function getCompanyAliasKeys(name: string, slug: string, website?: string) {
   return keys;
 }
 
-const VERIFIED_SLUGS = new Set(VERIFIED_COMPANIES.map((company) => company.slug));
-
 const ACTIVE_QUEUE_STATUSES: SubmissionQueueStatus[] = ["awaiting_review", "in_progress"];
 
 export type ExistingCompanyStatus = "verified" | "awaiting_review" | "in_progress";
@@ -99,6 +102,7 @@ function mapDbSubmissionStatus(value?: string | null): SubmissionQueueStatus {
 }
 
 function getSql() {
+  loadServerEnv();
   const url = process.env.DATABASE_URL?.trim();
   if (!url || url.includes("replace") || url.includes("user:password")) return null;
   if (!sql) sql = postgres(url, { max: 1, prepare: false });
@@ -120,12 +124,13 @@ function summarizeMessage(message: string, max = 120) {
   return `${trimmed.slice(0, max - 1)}…`;
 }
 
-function buildQueueNote(input: Pick<SubmissionInput, "requestType" | "message">) {
+function buildQueueNote(input: Pick<SubmissionInput, "requestType" | "message" | "isPortalRequest">) {
   const summary = summarizeMessage(input.message);
+  const source = input.isPortalRequest ? "Portal" : "Mail";
   if (input.requestType === "edit") {
-    return `Community edit request — ${summary}`;
+    return `${source} edit request — ${summary}`;
   }
-  return `Community request — ${summary}`;
+  return `${source} request — ${summary}`;
 }
 
 type SubscriberNotificationResult = {
@@ -222,7 +227,7 @@ export async function saveSubmission(input: SubmissionInput & { id: string }) {
   await db`
     INSERT INTO company_submissions (
       id, request_type, company_name, company_slug, website,
-      submitter_name, submitter_email, message
+      submitter_name, submitter_email, message, is_portal_request
     ) VALUES (
       ${input.id},
       ${input.requestType},
@@ -231,7 +236,8 @@ export async function saveSubmission(input: SubmissionInput & { id: string }) {
       ${input.website || null},
       ${input.submitterName},
       ${input.submitterEmail},
-      ${input.message}
+      ${input.message},
+      ${input.isPortalRequest}
     )
     ON CONFLICT (id) DO UPDATE SET
       request_type = EXCLUDED.request_type,
@@ -239,6 +245,7 @@ export async function saveSubmission(input: SubmissionInput & { id: string }) {
       company_slug = EXCLUDED.company_slug,
       website = EXCLUDED.website,
       message = EXCLUDED.message,
+      is_portal_request = EXCLUDED.is_portal_request,
       status = 'awaiting_review',
       updated_at = NOW()
   `;
@@ -265,12 +272,13 @@ async function findActiveQueueSubmission(item: QueueSubmissionItem) {
         company_slug: string | null;
         website: string | null;
         message: string;
+        is_portal_request: boolean;
         created_at: Date;
       }>
     >`
-      SELECT id, request_type, status, company_name, company_slug, website, message, created_at
+      SELECT id, request_type, status, company_name, company_slug, website, message, is_portal_request, created_at
       FROM company_submissions
-      WHERE status = ANY(${ACTIVE_QUEUE_STATUSES}) OR status = 'pending'
+      WHERE status = ANY(${ACTIVE_QUEUE_STATUSES})
       ORDER BY created_at DESC
       LIMIT 200
     `;
@@ -281,16 +289,14 @@ async function findActiveQueueSubmission(item: QueueSubmissionItem) {
         slug: row.company_slug?.trim() || slugifyCompanyName(row.company_name),
         name: row.company_name.trim(),
         requestType: row.request_type,
+        isPortalRequest: row.is_portal_request,
         queueStatus: mapDbSubmissionStatus(row.status),
-        note: buildQueueNote({ requestType: row.request_type, message: row.message }),
+        note: buildQueueNote({ requestType: row.request_type, message: row.message, isPortalRequest: row.is_portal_request }),
         submittedAt: row.created_at.toISOString(),
         website: row.website?.trim() || undefined,
       })),
     );
   }
-
-  const { readPendingQueueJson } = await import("@/lib/pending-queue-store");
-  candidates.push(...(await readPendingQueueJson()));
 
   return candidates.find(
     (candidate) =>
@@ -299,27 +305,56 @@ async function findActiveQueueSubmission(item: QueueSubmissionItem) {
   );
 }
 
-async function reconcileCatalogQueueDraftStatuses() {
+async function findCompanyProfile(input: Pick<SubmissionInput, "companyName" | "companySlug">) {
   const db = getSql();
-  if (!db) return;
+  if (!db) return null;
 
-  const { readCatalogQueueDrafts } = await import("@/lib/catalog-drafts");
-  const drafts = await readCatalogQueueDrafts();
-  for (const draft of drafts) {
-    const slug = draft.slug.trim();
-    if (!slug) continue;
+  const identity = normalizeCompanyIdentity(input.companyName);
+  const rows = await db<
+    Array<{ slug: string; name: string; verification_status: string }>
+  >`
+    SELECT slug, name, verification_status
+    FROM company_profiles
+    WHERE ${db.unsafe(getCompanyIdentitySql("slug"))} = ${identity}
+      OR ${db.unsafe(getCompanyIdentitySql("name"))} = ${identity}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
 
-    const status: SubmissionQueueStatus = draft.verificationStatus === "in_progress"
-      ? "in_progress"
-      : "awaiting_review";
-    await db`
-      UPDATE company_submissions
-      SET status = ${status}, updated_at = NOW()
-      WHERE LOWER(company_slug) = LOWER(${slug})
-        AND status IN ('awaiting_review', 'in_progress')
-        AND status <> ${status}
-    `;
+export async function getCompanyAvailability(companyName: string) {
+  const db = getSql();
+  const identity = normalizeCompanyIdentity(companyName);
+  if (!db || !identity) return { available: false as const, reason: "unavailable" as const };
+
+  const profiles = await db<Array<{ name: string; verification_status: string }>>`
+    SELECT name, verification_status
+    FROM company_profiles
+    WHERE ${db.unsafe(getCompanyIdentitySql("slug"))} = ${identity}
+      OR ${db.unsafe(getCompanyIdentitySql("name"))} = ${identity}
+    LIMIT 1
+  `;
+  const profile = profiles[0];
+  if (profile) {
+    return { available: false as const, reason: "profile" as const, name: profile.name, status: profile.verification_status };
   }
+
+  const submissions = await db<Array<{ company_name: string; status: SubmissionQueueStatus }>>`
+    SELECT company_name, status
+    FROM company_submissions
+    WHERE status = ANY(${ACTIVE_QUEUE_STATUSES})
+      AND (
+        ${db.unsafe(getCompanyIdentitySql("company_name"))} = ${identity}
+        OR ${db.unsafe(getCompanyIdentitySql("company_slug"))} = ${identity}
+      )
+    LIMIT 1
+  `;
+  const submission = submissions[0];
+  if (submission) {
+    return { available: false as const, reason: "queue" as const, name: submission.company_name, status: submission.status };
+  }
+
+  return { available: true as const };
 }
 
 export async function enqueueSubmissionFromMail(
@@ -339,22 +374,18 @@ export async function enqueueSubmissionFromMail(
     submitterName: input.submitterName?.trim() || undefined,
     submitterEmail: input.submitterEmail?.trim() || undefined,
     requestType: input.requestType,
+    isPortalRequest: input.isPortalRequest,
     queueStatus: "awaiting_review",
     note: buildQueueNote(input),
     submittedAt: new Date().toISOString(),
     website: input.website?.trim() || undefined,
   };
 
-  const companyKey = normalizeCompanyKey(input.companyName);
-  const slugKey = normalizeCompanyKey(slug);
-  const catalogCompany = input.requestType === "add" && COMPANIES.find(
-    (company) =>
-      normalizeCompanyKey(company.name) === companyKey || normalizeCompanyKey(company.slug) === slugKey,
-  );
+  const catalogCompany = input.requestType === "add" ? await findCompanyProfile(input) : null;
   if (catalogCompany) {
-    const existingStatus = catalogCompany.verificationStatus === "verified"
+    const existingStatus = catalogCompany.verification_status === "verified"
       ? "verified"
-      : catalogCompany.verificationStatus === "in_progress"
+      : catalogCompany.verification_status === "in_progress"
         ? "in_progress"
         : "awaiting_review";
     return {
@@ -385,30 +416,20 @@ export async function enqueueSubmissionFromMail(
   }
 
   const dbResult = await saveSubmission(input);
-  const { upsertPendingQueueJson } = await import("@/lib/pending-queue-store");
-  const jsonResult = await upsertPendingQueueJson(item);
-  const { upsertCatalogQueueDraft } = await import("@/lib/catalog-drafts");
-  const catalogResult = await upsertCatalogQueueDraft({
-    slug: item.slug,
-    name: item.name,
-    website: item.website,
-    status: "unverified",
-  });
 
   return {
-    stored: dbResult.stored || jsonResult.stored || catalogResult.updated,
+    stored: dbResult.stored,
     duplicate: false,
     alreadyInCatalog: false,
     item,
   };
 }
 
-export async function listQueueSubmissions() {
+export async function listQueueSubmissions(submissionId?: string) {
   const db = getSql();
   const dbItems: QueueSubmissionItem[] = [];
 
   if (db) {
-    await reconcileCatalogQueueDraftStatuses();
     const rows = await db<
       Array<{
         id: string;
@@ -418,12 +439,14 @@ export async function listQueueSubmissions() {
         company_slug: string | null;
         website: string | null;
         message: string;
+        is_portal_request: boolean;
         created_at: Date;
       }>
     >`
-      SELECT id, request_type, status, company_name, company_slug, website, message, created_at
+      SELECT id, request_type, status, company_name, company_slug, website, message, is_portal_request, created_at
       FROM company_submissions
-      WHERE status = ANY(${ACTIVE_QUEUE_STATUSES}) OR status = 'pending'
+      WHERE status = ANY(${ACTIVE_QUEUE_STATUSES})
+        AND (${submissionId ?? null}::text IS NULL OR id = ${submissionId ?? null})
       ORDER BY created_at DESC
       LIMIT 200
     `;
@@ -435,6 +458,7 @@ export async function listQueueSubmissions() {
         companyName: row.company_name,
         companySlug: slug,
         message: row.message,
+        isPortalRequest: row.is_portal_request,
       } as SubmissionInput;
 
       dbItems.push({
@@ -442,6 +466,7 @@ export async function listQueueSubmissions() {
         slug,
         name: row.company_name.trim(),
         requestType: row.request_type,
+        isPortalRequest: row.is_portal_request,
         queueStatus: mapDbSubmissionStatus(row.status),
         note: buildQueueNote(input),
         submittedAt: row.created_at.toISOString(),
@@ -450,25 +475,8 @@ export async function listQueueSubmissions() {
     }
   }
 
-  const { readPendingQueueJson } = await import("@/lib/pending-queue-store");
-  const jsonItems = await readPendingQueueJson();
+  return dbItems.filter((item) => item.slug && item.slug !== "unknown");
 
-  const seen = new Set<string>();
-  const merged = [...dbItems, ...jsonItems].filter((item) => {
-    if (!item.slug || item.slug === "unknown") return false;
-    if (
-      item.requestType === "edit" &&
-      !STATIC_PIPELINE_SLUGS.has(item.slug) &&
-      !ALL_COMPANY_SLUGS.includes(item.slug)
-    ) {
-      return false;
-    }
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-
-  return merged;
 }
 
 export async function updateSubmissionQueueStatus(input: {
@@ -479,68 +487,7 @@ export async function updateSubmissionQueueStatus(input: {
 }) {
   const db = getSql();
   if (!db) {
-    const { readPendingQueueJson, removePendingQueueJsonEntries, setPendingQueueJsonStatus } = await import(
-      "@/lib/pending-queue-store"
-    );
-
-    const items = await readPendingQueueJson();
-    const found = items.find(
-      (item) => item.id === input.id || (!!input.companySlug && item.slug === input.companySlug),
-    );
-
-    if (!found) return { updated: false as const, reason: "not-found" as const };
-
-    const previousStatus = found.queueStatus ?? "awaiting_review";
-    const changed = previousStatus !== input.status;
-
-    if (input.status === "verified" || input.status === "rejected") {
-      await removePendingQueueJsonEntries({ id: found.id, slug: found.slug });
-    } else {
-      await setPendingQueueJsonStatus({
-        id: found.id,
-        slug: found.slug,
-        queueStatus: input.status,
-      });
-    }
-
-    const { removeCatalogDraftBySlug, upsertCatalogQueueDraft } = await import(
-      "@/lib/catalog-drafts"
-    );
-    const effectiveSlug = input.companySlug?.trim() || found.slug;
-    const effectiveName = input.companyName?.trim() || found.name;
-    const effectiveWebsite = found.website;
-
-    if (ACTIVE_QUEUE_STATUSES.includes(input.status) && !VERIFIED_SLUGS.has(effectiveSlug)) {
-      await upsertCatalogQueueDraft({
-        slug: effectiveSlug,
-        name: effectiveName,
-        website: effectiveWebsite,
-        status: input.status === "in_progress" ? "in_progress" : "unverified",
-      });
-    } else {
-      await removeCatalogDraftBySlug(effectiveSlug);
-    }
-
-    const subscriberNotification = changed && input.status !== "rejected"
-      ? await notifySubscribersOnQueueStageChange({
-        companyName: effectiveName,
-        companySlug: effectiveSlug,
-        stage: input.status,
-        submitterEmail: found.submitterEmail,
-        submitterName: found.submitterName,
-      })
-      : undefined;
-
-    return {
-      updated: true as const,
-      id: found.id,
-      companyName: effectiveName,
-      companySlug: effectiveSlug,
-      status: input.status,
-      previousStatus,
-      changed,
-      subscriberNotification,
-    };
+    return { updated: false as const, reason: "unavailable" as const };
   }
 
   const rows = await db<
@@ -575,35 +522,8 @@ export async function updateSubmissionQueueStatus(input: {
   const changed = previousStatus !== nextStatus;
   const resolvedSlug = input.companySlug?.trim() || row.company_slug || undefined;
 
-  const { removePendingQueueJsonEntries, setPendingQueueJsonStatus } = await import(
-    "@/lib/pending-queue-store"
-  );
-
-  if (nextStatus === "verified" || nextStatus === "rejected") {
-    await removePendingQueueJsonEntries({ id: row.id, slug: resolvedSlug });
-  } else {
-    await setPendingQueueJsonStatus({
-      id: row.id,
-      slug: resolvedSlug,
-      queueStatus: nextStatus,
-    });
-  }
-
-  const { removeCatalogDraftBySlug, upsertCatalogQueueDraft } = await import(
-    "@/lib/catalog-drafts"
-  );
   const effectiveSlug = resolvedSlug || slugifyCompanyName(row.company_name);
   const effectiveName = input.companyName?.trim() || row.company_name;
-
-  if (ACTIVE_QUEUE_STATUSES.includes(nextStatus) && !VERIFIED_SLUGS.has(effectiveSlug)) {
-    await upsertCatalogQueueDraft({
-      slug: effectiveSlug,
-      name: effectiveName,
-      status: nextStatus === "in_progress" ? "in_progress" : "unverified",
-    });
-  } else {
-    await removeCatalogDraftBySlug(effectiveSlug);
-  }
 
   const subscriberNotification = changed && nextStatus !== "rejected"
     ? await notifySubscribersOnQueueStageChange({

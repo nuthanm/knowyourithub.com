@@ -7,6 +7,7 @@ export type QueueSubmissionItem = {
   submitterName?: string;
   submitterEmail?: string;
   requestType: "add" | "edit";
+  isPortalRequest: boolean;
   queueStatus: SubmissionQueueStatus;
   note: string;
   submittedAt: string;

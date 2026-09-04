@@ -22,12 +22,14 @@ export function MathCaptchaField({
   onTokenChange,
   resetKey = 0,
   error,
+  disabled = false,
 }: {
   answer: string;
   onAnswerChange: (val: string) => void;
   onTokenChange: (token: string) => void;
   resetKey?: number;
   error?: string;
+  disabled?: boolean;
 }) {
   const [state, setState] = useState<CaptchaState>({ status: "loading" });
   const [prevResetKey, setPrevResetKey] = useState(resetKey);
@@ -98,7 +100,7 @@ export function MathCaptchaField({
           className="captcha-refresh"
           aria-label="Refresh CAPTCHA"
           onClick={() => void load()}
-          disabled={state.status === "loading"}
+          disabled={disabled || state.status === "loading"}
         >
           ↻
         </button>
@@ -112,7 +114,7 @@ export function MathCaptchaField({
         placeholder="Your answer"
         autoComplete="off"
         className="captcha-input"
-        disabled={state.status !== "ready"}
+        disabled={disabled || state.status !== "ready"}
       />
       {error && <p className="form-error">{error}</p>}
       {state.status === "error" && <p className="form-error">{state.message}</p>}

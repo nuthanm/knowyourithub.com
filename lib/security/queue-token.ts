@@ -15,6 +15,7 @@ export type QueueAcceptPayload = {
 
 export type QueueModerationPayload = {
   role: "moderator";
+  submissionId?: string;
   exp: number;
 };
 
@@ -116,9 +117,9 @@ export function verifyMailBannerToken(
 }
 
 /** No-login moderation token for queue status updates from trusted email links. */
-export function createQueueModerationToken(ttlMs = 7 * 24 * 60 * 60 * 1000) {
+export function createQueueModerationToken(submissionId?: string, ttlMs = 7 * 24 * 60 * 60 * 1000) {
   const body = Buffer.from(
-    JSON.stringify({ role: "moderator", exp: Date.now() + ttlMs } satisfies QueueModerationPayload),
+    JSON.stringify({ role: "moderator", submissionId, exp: Date.now() + ttlMs } satisfies QueueModerationPayload),
     "utf8",
   ).toString("base64url");
   return `${body}.${sign(body)}`;
@@ -140,9 +141,9 @@ export function verifyQueueModerationToken(token?: string | null): QueueModerati
 
   try {
     const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as QueueModerationPayload;
-    if (parsed.role !== "moderator") return null;
+    if (parsed.role !== "moderator" || (parsed.submissionId !== undefined && !parsed.submissionId)) return null;
     if (!parsed.exp || Date.now() > parsed.exp) return null;
-    return parsed;
+    return { role: parsed.role, submissionId: parsed.submissionId, exp: parsed.exp };
   } catch {
     return null;
   }

@@ -16,11 +16,13 @@ description: >-
 
 ## Before starting
 
-1. Check duplicates in `data/companies.json` and `data/pipeline.json` (by slug and name).
-2. If already **verified**, tell the user and offer to update fields instead.
-3. If in **pipeline**, continue research and build the full profile.
+1. Run `node scripts/find-company-request.mjs "Company Name"` first. It queries PostgreSQL by name and slug in `company_submissions` and `company_profiles`. Do not use `data/companies.json` or `data/pipeline.json` for duplicate or queue checks.
+2. If `company_profiles.verification_status` is `verified`, tell the user and offer to update fields instead.
+3. If `company_submissions.status` is `awaiting_review` or `in_progress`, continue the research workflow for that request. If a matching profile is already `in_progress`, use its payload as the starting point.
 
 Slug: use `slugifyCompanyName()` from `lib/companies.ts` (lowercase, hyphens).
+
+The database is the queue authority. `data/companies.json` is a temporary, local research handoff only; never treat it as a queue or catalog source.
 
 ## Research rules
 
@@ -153,19 +155,33 @@ Avoid stale titles. If leadership changed recently (e.g. founder stepped down to
 
 ## Where to write data
 
-### Step 1 — Draft (default)
+### Step 1 — Find or create the database request
 
-Add the **full profile** to `data/companies.json` → `companies[]` with:
+For an existing UI or mail request, read its `company_submissions` row. New manual requests must be created in `company_submissions` with:
+
+```json
+"status": "awaiting_review"
+```
+
+Do not add submission requests to `data/companies.json`, `data/pipeline.json`, or pending JSON. The Review Soon page reads only `company_submissions` rows with `awaiting_review` or `in_progress`.
+
+### Step 2 — Research and synchronize an in-progress profile
+
+Research the complete profile using the rules above. Add or update only this researched company in `data/companies.json` with:
 
 ```json
 "verificationStatus": "in_progress"
 ```
 
-**Remove from `data/pipeline.json`** as soon as the draft is written to `companies.json` — check both `inProgress` and `unverified` arrays and delete the entry matching the slug. The catalog entry replaces the pipeline stub; do not leave duplicates across both files.
+Run:
 
-Update `catalogUpdated` to today's date.
+```powershell
+node scripts/sync-companies-db.mjs
+```
 
-### Step 2 — Present for review
+The script upserts the full profile to `company_profiles` with `in_progress` and updates matching `company_submissions` rows to `in_progress`. Remove that company entry from `data/companies.json` after a successful sync. It will appear as **In progress** on `/coming-soon` directly from PostgreSQL.
+
+### Step 3 — Present for review
 
 After editing JSON, show the user a **review table**:
 
@@ -175,20 +191,20 @@ After editing JSON, show the user a **review table**:
 | … | … | … |
 
 End with:
-- Link path: `/companies/{slug}` (shows pipeline placeholder until verified)
+- Link path: `/companies/{slug}` (available once the verified profile is published)
 - Ask: **"Review the draft above. Reply 'verify {name}' when ready to publish."**
 
 Do **not** set `verified` unless the user explicitly approves.
 
-### Step 3 — Verify (user approves)
+### Step 4 — Verify (user approves)
 
 When user says "verify", "publish", "looks good", or similar:
 
-1. Set `verificationStatus`: `"verified"`
-2. Set `lastVerified` to today
-3. Update `catalogUpdated` in `data/companies.json`
-4. Confirm the slug is **not** still in `data/pipeline.json` (should already be removed at draft time)
-5. Confirm: profile live at `/companies/{slug}` with Verified badge
+1. Read the in-progress `company_profiles` payload from PostgreSQL.
+2. Write that profile temporarily to `data/companies.json`, set `verificationStatus` to `"verified"`, and set `lastVerified` to today.
+3. Run `node scripts/sync-companies-db.mjs`. It upserts the verified profile and removes matching rows from `company_submissions`.
+4. Remove that company entry from `data/companies.json` after the script succeeds.
+5. Confirm: the profile is live at `/companies/{slug}` with the Verified badge and it is absent from `/coming-soon`.
 
 ## Reference profiles
 
@@ -210,7 +226,7 @@ Use **[AstraZeneca](https://knowyourithub.com/companies/astrazeneca/)** (`slug: 
 | Sidebar | `leadership` (group CEO; add CTO/COO only when officially listed), quick links |
 | Sources | One `{ label, url }` per fact block (About, Leadership, India presence, Careers, Annual report, Contact) |
 
-**Example JSON skeleton** (copy field set from `astrazeneca` in `data/companies.json`):
+**Example JSON skeleton** (use as the temporary `data/companies.json` payload for `node scripts/sync-companies-db.mjs`):
 
 ```json
 {
@@ -275,8 +291,9 @@ Copy structure and tone from existing entries in `data/companies.json`:
 - [ ] `headcountNote` added when numbers are approximate
 - [ ] `onsitePolicy` phrased cautiously ("Hybrid — verify on careers page")
 - [ ] No duplicate URLs across `sources` and quick links (app dedupes automatically)
-- [ ] Slug is unique across catalog + pipeline
-- [ ] Entry removed from `data/pipeline.json` (`inProgress` or `unverified`) once draft exists in `companies.json`
+- [ ] Database lookup completed for matching `company_submissions` and `company_profiles` rows
+- [ ] UI/mail request was not written to `data/companies.json` or `data/pipeline.json`
+- [ ] Temporary `data/companies.json` entry was removed after the in-progress or verified DB sync
 - [ ] **Leadership:** main founder role uses `"Founder"` (not `"Co-founder"`); CEO/COO/CTO only when officially listed
 - [ ] **Leadership:** roles reflect current titles, not outdated press coverage
 - [ ] **Locations:** `officeCities` lists hiring hubs; HQ stays in `hq` only (not duplicated in cities unless it's also a major office)

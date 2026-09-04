@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { z } from "zod";
 import { FormActions } from "@/components/FormLayout";
-import { COMPANIES, slugifyCompanyName } from "@/lib/companies";
-import { getSubmitApiUrl } from "@/lib/site-meta";
+import { COMPANIES } from "@/lib/companies";
+import { getCompanyAvailabilityApiUrl, getSubmitApiUrl } from "@/lib/site-meta";
 import { submissionSchema, type SubmissionInput } from "@/lib/validators";
 import { MathCaptchaField } from "./MathCaptchaField";
 import { AppSelect } from "./AppSelect";
+import { IconInfo } from "./PortalIcons";
 
-type FormValues = SubmissionInput;
+type FormValues = z.input<typeof submissionSchema>;
 
 function formatRetryAfter(retryAfterSeconds: number) {
   const minutes = Math.floor(retryAfterSeconds / 60);
@@ -35,6 +37,8 @@ export function CompanySubmissionForm({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle");
   const [duplicateStatus, setDuplicateStatus] = useState<"awaiting_review" | "in_progress" | undefined>();
   const [errorMessage, setErrorMessage] = useState("");
+  const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "exists" | "error">("idle");
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
 
   const {
     register,
@@ -42,23 +46,66 @@ export function CompanySubmissionForm({
     control,
     setValue,
     trigger,
+    clearErrors,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<FormValues, unknown, SubmissionInput>({
     resolver: zodResolver(submissionSchema),
     defaultValues: {
       requestType: initialSlug ? "edit" : "add",
       companySlug: initialSlug ?? "",
       companyName: initialCompanyName ?? "",
+      isPortalRequest: true,
       acceptPolicy: undefined,
     },
   });
 
   const requestType = useWatch({ control, name: "requestType" });
   const companyName = useWatch({ control, name: "companyName" });
+  const companySlug = useWatch({ control, name: "companySlug" });
+  const acceptPolicy = useWatch({ control, name: "acceptPolicy" });
+  const isNewCompanyBlocked = requestType === "add" && availability === "exists";
 
   useEffect(() => {
     setValue("formStartedAt", Date.now());
   }, [setValue]);
+
+  useEffect(() => {
+    setAvailability("idle");
+    setAvailabilityMessage("");
+  }, [companyName, requestType]);
+
+  function clearDisplayedErrors() {
+    setStatus("idle");
+    setErrorMessage("");
+    setCaptchaError("");
+    clearErrors();
+  }
+
+  async function checkAvailability() {
+    const name = companyName.trim();
+    if (name.length < 2 || availability === "checking") return;
+    setAvailability("checking");
+    setAvailabilityMessage("");
+
+    try {
+      const response = await fetch(
+        `${getCompanyAvailabilityApiUrl()}?companyName=${encodeURIComponent(name)}`,
+        { cache: "no-store" },
+      );
+      const data = (await response.json()) as { ok?: boolean; available?: boolean; name?: string; error?: string };
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to check company availability.");
+      if (data.available) {
+        setAvailability("available");
+        setAvailabilityMessage(`${name} is not in the catalog or review queue. You can submit it.`);
+      } else {
+        setAvailability("exists");
+        setAvailabilityMessage(`${data.name || name} already exists in the catalog or review queue.`);
+      }
+    } catch (error) {
+      setAvailability("error");
+      setAvailabilityMessage(error instanceof Error ? error.message : "Unable to check company availability.");
+    }
+  }
 
   function getFriendlyErrorMessage(message: string) {
     if (message.includes("did not match the expected pattern") || message.includes("valid website")) {
@@ -80,6 +127,8 @@ export function CompanySubmissionForm({
   }
 
   async function onSubmit(values: FormValues) {
+    if (requestType === "add" && availability !== "available") return;
+    if (requestType === "edit" && !companySlug) return;
     setStatus("loading");
     setErrorMessage("");
     setDuplicateStatus(undefined);
@@ -191,7 +240,7 @@ export function CompanySubmissionForm({
   }
 
   return (
-    <form className="app-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="app-form" onSubmit={handleSubmit(onSubmit)} onChange={clearDisplayedErrors} noValidate>
       <input type="hidden" {...register("formStartedAt")} />
       <div className="hp-field" aria-hidden="true">
         <label htmlFor="websiteField">Website</label>
@@ -212,21 +261,38 @@ export function CompanySubmissionForm({
         </div>
       </fieldset>
 
-      <div className="form-field">
-        <label htmlFor="companyName">Company name *</label>
-        <input
-          id="companyName"
-          type="text"
-          {...register("companyName")}
-          placeholder="e.g. Razorpay"
-          autoComplete="organization"
-        />
-        {errors.companyName && <p className="form-error">{errors.companyName.message}</p>}
-      </div>
+      {requestType === "add" && (
+        <div className="form-field">
+          <label htmlFor="companyName">Company name *</label>
+          <div className="form-field-action">
+            <input
+              id="companyName"
+              type="text"
+              {...register("companyName")}
+              placeholder="e.g. Razorpay"
+              autoComplete="organization"
+            />
+            <button
+              type="button"
+              className="availability-check-btn"
+              disabled={companyName.trim().length < 2 || availability === "checking"}
+              onClick={() => void checkAvailability()}
+            >
+              {availability === "checking" ? "Checking…" : "Check availability"}
+            </button>
+          </div>
+          {availabilityMessage && (
+            <p className={availability === "available" ? "form-availability-success" : "form-error"}>
+              {availabilityMessage}
+            </p>
+          )}
+          {errors.companyName && <p className="form-error">{errors.companyName.message}</p>}
+        </div>
+      )}
 
       {requestType === "edit" && (
         <div className="form-field">
-          <label htmlFor="companySlug">Existing company (optional)</label>
+          <label htmlFor="companySlug">Existing company *</label>
           <Controller
             name="companySlug"
             control={control}
@@ -235,7 +301,11 @@ export function CompanySubmissionForm({
                 inputId="companySlug"
                 ariaLabel="Existing company"
                 value={field.value ?? ""}
-                onChange={field.onChange}
+                onChange={(slug) => {
+                  field.onChange(slug);
+                  const company = COMPANIES.find((entry) => entry.slug === slug);
+                  setValue("companyName", company?.name ?? "", { shouldValidate: true });
+                }}
                 options={[
                   { value: "", label: "Select from catalog..." },
                   ...COMPANIES.map((c) => ({ value: c.slug, label: c.name })),
@@ -244,9 +314,7 @@ export function CompanySubmissionForm({
               />
             )}
           />
-          <p className="form-hint">
-            Or type a slug: {slugifyCompanyName(companyName || "company-name")}
-          </p>
+          {errors.companySlug && <p className="form-error">{errors.companySlug.message}</p>}
         </div>
       )}
 
@@ -258,6 +326,7 @@ export function CompanySubmissionForm({
           {...register("website")}
           placeholder="https://example.com"
           autoComplete="url"
+          disabled={isNewCompanyBlocked}
         />
         {errors.website && <p className="form-error">{errors.website.message}</p>}
       </div>
@@ -270,6 +339,7 @@ export function CompanySubmissionForm({
             type="text"
             {...register("submitterName")}
             autoComplete="name"
+            disabled={isNewCompanyBlocked}
           />
           {errors.submitterName && <p className="form-error">{errors.submitterName.message}</p>}
         </div>
@@ -280,6 +350,7 @@ export function CompanySubmissionForm({
             type="email"
             {...register("submitterEmail")}
             autoComplete="email"
+            disabled={isNewCompanyBlocked}
           />
           {errors.submitterEmail && <p className="form-error">{errors.submitterEmail.message}</p>}
         </div>
@@ -292,13 +363,14 @@ export function CompanySubmissionForm({
           rows={6}
           {...register("message")}
           placeholder="Describe category (product/service), headcount, domains, interview patterns, careers link, etc."
+          disabled={isNewCompanyBlocked}
         />
         <p className="form-hint">Add at least 20 characters with the key details that help us verify the company.</p>
         {errors.message && <p className="form-error">{errors.message.message}</p>}
       </div>
 
       <label className="checkbox-card">
-        <input type="checkbox" {...register("subscribeToUpdates")} />
+        <input type="checkbox" {...register("subscribeToUpdates")} disabled={isNewCompanyBlocked} />
         <span>
           Email me when new companies are verified or profiles are updated (what we added / changed).
           Update alerts — coming soon.
@@ -306,7 +378,25 @@ export function CompanySubmissionForm({
       </label>
 
       <label className="checkbox-card">
-        <input type="checkbox" {...register("acceptPolicy")} />
+        <input type="checkbox" {...register("isPortalRequest")} disabled={isNewCompanyBlocked} />
+        <span>
+          This is a portal request
+          <span
+            className="form-tooltip"
+            tabIndex={0}
+            role="img"
+            aria-label="Leave this checked for a request submitted through this portal. Clear it only when entering a request received by email."
+          >
+            <IconInfo size={16} />
+            <span role="tooltip">
+              Leave this checked for a request submitted through this portal. Clear it only when entering a request received by email.
+            </span>
+          </span>
+        </span>
+      </label>
+
+      <label className="checkbox-card">
+        <input type="checkbox" {...register("acceptPolicy")} disabled={isNewCompanyBlocked} />
         <span>
           I accept the <Link href="/privacy-policy">Privacy Policy</Link> and{" "}
           <Link href="/terms-and-conditions">Terms and Conditions</Link>.
@@ -316,16 +406,29 @@ export function CompanySubmissionForm({
 
       <MathCaptchaField
         answer={captchaAnswer}
-        onAnswerChange={setCaptchaAnswer}
+        onAnswerChange={(answer) => {
+          setCaptchaAnswer(answer);
+          clearDisplayedErrors();
+        }}
         onTokenChange={setCaptchaToken}
         resetKey={captchaResetKey}
         error={captchaError}
+        disabled={isNewCompanyBlocked}
       />
 
       {errorMessage && <p className="form-error banner">{errorMessage}</p>}
 
       <FormActions hint="No account needed. Every submission is reviewed against official sources before we update the catalog.">
-        <button type="submit" className="form-submit-btn" disabled={status === "loading"}>
+        <button
+          type="submit"
+          className="form-submit-btn"
+          disabled={
+            status === "loading" ||
+            !acceptPolicy ||
+            (requestType === "add" && availability !== "available") ||
+            (requestType === "edit" && !companySlug)
+          }
+        >
           {status === "loading" ? "Submitting…" : "Submit request"}
         </button>
       </FormActions>

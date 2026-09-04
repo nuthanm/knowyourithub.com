@@ -1,4 +1,4 @@
-import { access, readFile, writeFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import nodemailer from "nodemailer";
 import postgres from "postgres";
@@ -14,14 +14,13 @@ if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
 
 const generatedCatalogPath = resolve(process.cwd(), "data", "catalog.generated.json");
 const companiesJsonPath = resolve(process.cwd(), "data", "companies.json");
-const pipelinePath = resolve(process.cwd(), "data", "pipeline.json");
 
-// Determine which file to read: prefer companies.json (source of truth), fall back to catalog.generated.json
+// companies.json is a temporary researched-profile handoff; the generated catalog is the fallback.
 let catalogPath;
 try {
   await access(companiesJsonPath);
   catalogPath = companiesJsonPath;
-  console.log("Using data/companies.json as source (user-editable source of truth)");
+  console.log("Using data/companies.json as temporary researched-profile input");
 } catch {
   catalogPath = generatedCatalogPath;
   console.log("Using data/catalog.generated.json as source (generated from DB)");
@@ -71,47 +70,6 @@ if (companies.length === 0) {
   process.exit(0);
 }
 
-const allCatalogSlugs = new Set(
-  companies
-    .map((company) => String(company.slug || "").trim())
-    .filter(Boolean),
-);
-
-async function prunePipelineJson() {
-  try {
-    const rawPipeline = await readFile(pipelinePath, "utf8");
-    const parsed = JSON.parse(rawPipeline);
-    const inProgress = Array.isArray(parsed?.inProgress) ? parsed.inProgress : [];
-    const unverified = Array.isArray(parsed?.unverified) ? parsed.unverified : [];
-
-    const nextInProgress = inProgress.filter((item) => {
-      const slug = String(item?.slug || "").trim();
-      return !slug || !allCatalogSlugs.has(slug);
-    });
-    const nextUnverified = unverified.filter((item) => {
-      const slug = String(item?.slug || "").trim();
-      return !slug || !allCatalogSlugs.has(slug);
-    });
-
-    const changed =
-      nextInProgress.length !== inProgress.length || nextUnverified.length !== unverified.length;
-
-    if (!changed) return { removed: 0 };
-
-    const next = {
-      ...parsed,
-      inProgress: nextInProgress,
-      unverified: nextUnverified,
-    };
-
-    await writeFile(pipelinePath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-    const removed = inProgress.length + unverified.length - nextInProgress.length - nextUnverified.length;
-    return { removed };
-  } catch {
-    return { removed: 0 };
-  }
-}
-
 const sql = postgres(dbUrl, { max: 1, prepare: false });
 
 try {
@@ -139,6 +97,7 @@ try {
       const category = String(company.category || "unknown").trim();
       const verificationStatus = normalizeStatus(company.verificationStatus);
       const lastVerified = company.lastVerified ? String(company.lastVerified) : null;
+      if (verificationStatus === "unverified") continue;
 
       await tx`
         INSERT INTO company_profiles (slug, name, category, verification_status, last_verified, payload, updated_at)
@@ -173,14 +132,8 @@ try {
       `;
 
       for (const submission of matchingSubmissions) {
-        // Update status to match catalog
-        await tx`
-          UPDATE company_submissions
-          SET status = ${targetStatus}, updated_at = NOW()
-          WHERE id = ${submission.id}
-        `;
-
         if (targetStatus === "verified") {
+          await tx`DELETE FROM company_submissions WHERE id = ${submission.id}`;
           newlyVerified.push({
             companyName: String(submission.company_name || "").trim(),
             companySlug: String(submission.company_slug || "").trim(),
@@ -189,6 +142,11 @@ try {
           });
           console.log(`✓ Verified: ${submission.company_name}`);
         } else if (targetStatus === "in_progress") {
+          await tx`
+            UPDATE company_submissions
+            SET status = 'in_progress', updated_at = NOW()
+            WHERE id = ${submission.id}
+          `;
           newlyInProgress.push({
             companyName: String(submission.company_name || "").trim(),
             companySlug: String(submission.company_slug || "").trim(),
@@ -342,10 +300,6 @@ try {
   console.log(`Synced ${companies.length} companies to company_profiles.`);
   console.log(`Updated ${newlyVerified.length} submissions to verified.`);
   console.log(`Updated ${newlyInProgress.length} submissions to in_progress.`);
-  const pruned = await prunePipelineJson();
-  if (pruned.removed > 0) {
-    console.log(`Removed ${pruned.removed} synced entries from data/pipeline.json.`);
-  }
 } finally {
   await sql.end({ timeout: 5 });
 }

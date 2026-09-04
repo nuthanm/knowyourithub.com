@@ -119,7 +119,7 @@ export function buildAdminEmail(input: SubmissionInput & { id: string }) {
   const site = getSiteUrl();
   const catalog = getCatalogUrl();
   const addToQueueUrl = buildAddToQueueUrl(input);
-  const moderationToken = createQueueModerationToken();
+  const moderationToken = createQueueModerationToken(input.id);
   const moderationUrl = `${catalog}/coming-soon/?moderate=${encodeURIComponent(moderationToken)}`;
   const subject = `[${SITE_NAME}] ${input.requestType === "add" ? "Add" : "Edit"} request: ${input.companyName}`;
   const lines = [

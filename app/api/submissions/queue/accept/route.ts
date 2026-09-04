@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     submitterName: payload.submitterName,
     submitterEmail: payload.submitterEmail,
     message: payload.message,
+    isPortalRequest: false,
     acceptPolicy: true,
   });
 

@@ -5,7 +5,6 @@ import { verifyQueueModerationToken } from "@/lib/security/queue-token";
 const ALLOWED_STATUSES = new Set<SubmissionQueueStatus>([
   "awaiting_review",
   "in_progress",
-  "verified",
   "rejected",
 ]);
 
@@ -22,9 +21,10 @@ function hasValidAdminKey(request: Request) {
   return Boolean(provided) && provided === configured;
 }
 
-function hasValidModeratorToken(request: Request) {
+function hasValidModeratorToken(request: Request, submissionId: string) {
   const token = request.headers.get("x-moderator-token")?.trim();
-  return Boolean(verifyQueueModerationToken(token));
+  const payload = verifyQueueModerationToken(token);
+  return Boolean(payload && (!payload.submissionId || payload.submissionId === submissionId));
 }
 
 export async function OPTIONS(request: Request) {
@@ -32,10 +32,6 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!hasValidAdminKey(request) && !hasValidModeratorToken(request)) {
-    return jsonResponse({ ok: false, error: "Unauthorized." }, request, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -60,9 +56,13 @@ export async function POST(request: Request) {
     return jsonResponse({ ok: false, error: "Submission id is required." }, request, { status: 400 });
   }
 
+  if (!hasValidAdminKey(request) && !hasValidModeratorToken(request, id)) {
+    return jsonResponse({ ok: false, error: "Unauthorized." }, request, { status: 401 });
+  }
+
   if (!ALLOWED_STATUSES.has(status as SubmissionQueueStatus)) {
     return jsonResponse(
-      { ok: false, error: "Status must be one of awaiting_review, in_progress, verified, rejected." },
+      { ok: false, error: "Status must be one of awaiting_review, in_progress, rejected." },
       request,
       { status: 400 },
     );
