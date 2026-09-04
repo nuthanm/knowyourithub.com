@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { GlobalCompanySearch } from "@/components/GlobalCompanySearch";
+import type { CompanySearchEntry } from "@/lib/company-search";
 import {
   IconBrief,
   IconClose,
@@ -20,6 +21,7 @@ type NavKey = "home" | "companies" | "queue" | "brief" | "submit" | "feedback";
 type AppHeaderProps = {
   active?: NavKey;
   trailing?: React.ReactNode;
+  searchEntries?: CompanySearchEntry[];
 };
 
 const NAV_ITEMS: Array<{
@@ -36,7 +38,7 @@ const NAV_ITEMS: Array<{
   { key: "feedback", href: "/feedback", label: "Feedback", Icon: IconFeedback },
 ];
 
-export function AppHeader({ active, trailing }: AppHeaderProps) {
+export function AppHeader({ active, trailing, searchEntries }: AppHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export function AppHeader({ active, trailing }: AppHeaderProps) {
         </Link>
 
         <div className="app-nav-search">
-          <GlobalCompanySearch variant="nav" />
+          <GlobalCompanySearch variant="nav" entries={searchEntries} />
         </div>
 
         <div className="app-nav-end">
@@ -105,7 +107,11 @@ export function AppHeader({ active, trailing }: AppHeaderProps) {
       )}
 
       <div className="app-nav-search-mobile-bar">
-        <GlobalCompanySearch variant="nav" inputId="global-company-search-bar" />
+        <GlobalCompanySearch
+          variant="nav"
+          inputId="global-company-search-bar"
+          entries={searchEntries}
+        />
       </div>
 
       <nav
@@ -115,7 +121,11 @@ export function AppHeader({ active, trailing }: AppHeaderProps) {
         aria-hidden={!menuOpen}
       >
         <div className="app-nav-mobile-search">
-          <GlobalCompanySearch variant="nav" inputId="global-company-search-mobile" />
+          <GlobalCompanySearch
+            variant="nav"
+            inputId="global-company-search-mobile"
+            entries={searchEntries}
+          />
         </div>
         <ul className="app-nav-mobile-list">
           {NAV_ITEMS.map(({ key, href, label, Icon }) => (

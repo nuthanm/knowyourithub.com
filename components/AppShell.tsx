@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { SubscriberPill } from "@/components/SubscriberPill";
+import { getCatalogCompanies } from "@/lib/catalog-db";
+import { ALL_SEARCH_ENTRIES } from "@/lib/companies";
+import { companyProfileToEntry } from "@/lib/company-search";
 import stats from "@/data/site-stats.json";
 
 type AppShellProps = {
@@ -9,9 +12,15 @@ type AppShellProps = {
   wide?: boolean;
 };
 
-export function AppShell({ children, active, wide }: AppShellProps) {
+export async function AppShell({ children, active, wide }: AppShellProps) {
   const showSubscriberPill =
     stats.showSubscriberCount && stats.subscriberCount > 0;
+  const catalogEntries = (await getCatalogCompanies()).map(companyProfileToEntry);
+  const catalogSlugs = new Set(catalogEntries.map((entry) => entry.slug));
+  const searchEntries = [
+    ...catalogEntries,
+    ...ALL_SEARCH_ENTRIES.filter((entry) => !catalogSlugs.has(entry.slug)),
+  ];
 
   return (
     <div className="app-shell">
@@ -19,6 +28,7 @@ export function AppShell({ children, active, wide }: AppShellProps) {
         <AppHeader
           active={active === "about" || active === "contact" ? undefined : active}
           trailing={showSubscriberPill ? <SubscriberPill /> : undefined}
+          searchEntries={searchEntries}
         />
       </header>
       <main className={`app-main ${wide ? "app-main-wide" : ""}`.trim()}>{children}</main>

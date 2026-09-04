@@ -16,6 +16,7 @@ type CompanySearchInputProps = {
   category?: CompanySearchEntry["category"] | "all";
   inputId?: string;
   variant?: "inline" | "nav";
+  entries?: CompanySearchEntry[];
 };
 
 const SUGGESTION_LIMIT = 8;
@@ -36,6 +37,7 @@ export function CompanySearchInput({
   category = "all",
   inputId = "company-search",
   variant = "inline",
+  entries = ALL_SEARCH_ENTRIES,
 }: CompanySearchInputProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -45,23 +47,23 @@ export function CompanySearchInput({
     const q = value.trim();
     if (!q) return [];
 
-    return filterCompanyEntries(ALL_SEARCH_ENTRIES, {
+    return filterCompanyEntries(entries, {
       query: q,
       location: location && location !== "all" ? location : undefined,
       category,
     }).slice(0, SUGGESTION_LIMIT);
-  }, [value, location, category]);
+  }, [value, location, category, entries]);
 
   const allMatches = useMemo(() => {
     const q = value.trim();
     if (!q) return [];
 
-    return filterCompanyEntries(ALL_SEARCH_ENTRIES, {
+    return filterCompanyEntries(entries, {
       query: q,
       location: location && location !== "all" ? location : undefined,
       category,
     });
-  }, [value, location, category]);
+  }, [value, location, category, entries]);
 
   const matchCounts = useMemo(() => countMatchesByStatus(allMatches), [allMatches]);
 
