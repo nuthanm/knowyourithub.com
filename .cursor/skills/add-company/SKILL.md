@@ -24,6 +24,21 @@ Slug: use `slugifyCompanyName()` from `lib/companies.ts` (lowercase, hyphens).
 
 The database is the queue authority. `data/companies.json` is a temporary, local research handoff only; never treat it as a queue or catalog source.
 
+## Requester email notifications
+
+`node scripts/sync-companies-db.mjs` sends requester notifications for status transitions. It resolves the requester from the matching `company_submissions.submitter_email` record and uses the application's SMTP configuration. Do not run or create a separate notification command for this workflow.
+
+Use the application's environment-based SMTP configuration; never put mail credentials in this skill file or in `data/companies.json`.
+
+### Delivery requirements
+
+- Send an **in-progress** acknowledgement only after the database sync successfully changes the request to `in_progress`.
+- Send a **verified** notification only after the database sync successfully publishes the profile as `verified`.
+- A transition only produces a notification when the submission changes status, preventing repeated syncs from sending duplicate status emails.
+- If a requester email is missing or invalid, or delivery fails, report it from the sync output. Do not claim the requester was notified.
+- A mail failure must not silently revert or incorrectly report the already-successful profile status transition.
+- The verified email should include the company name and live path `/companies/{slug}`. The in-progress email should state that research is underway.
+
 ## Research rules
 
 **Only use official or authoritative sources:**
@@ -179,7 +194,7 @@ Run:
 node scripts/sync-companies-db.mjs
 ```
 
-The script upserts the full profile to `company_profiles` with `in_progress` and updates matching `company_submissions` rows to `in_progress`. Remove that company entry from `data/companies.json` after a successful sync. It will appear as **In progress** on `/coming-soon` directly from PostgreSQL.
+The sync script upserts the full profile to `company_profiles` with `in_progress`, updates matching `company_submissions` rows to `in_progress`, and sends the in-progress acknowledgement to each valid requester email. Remove that company entry from `data/companies.json` after a successful sync. It will appear as **In progress** on `/coming-soon` directly from PostgreSQL.
 
 ### Step 3 — Present for review
 
@@ -203,8 +218,9 @@ When user says "verify", "publish", "looks good", or similar:
 1. Read the in-progress `company_profiles` payload from PostgreSQL.
 2. Write that profile temporarily to `data/companies.json`, set `verificationStatus` to `"verified"`, and set `lastVerified` to today.
 3. Run `node scripts/sync-companies-db.mjs`. It upserts the verified profile and removes matching rows from `company_submissions`.
-4. Remove that company entry from `data/companies.json` after the script succeeds.
-5. Confirm: the profile is live at `/companies/{slug}` with the Verified badge and it is absent from `/coming-soon`.
+4. The sync sends the verified email to each valid requester email. If it fails, report the delivery error from the sync output; do not state that mail was sent.
+5. Remove that company entry from `data/companies.json` after the script succeeds.
+6. Confirm: the profile is live at `/companies/{slug}` with the Verified badge, it is absent from `/coming-soon`, and the requester notification was sent or its delivery failure was reported.
 
 ## Reference profiles
 
@@ -294,6 +310,11 @@ Copy structure and tone from existing entries in `data/companies.json`:
 - [ ] Database lookup completed for matching `company_submissions` and `company_profiles` rows
 - [ ] UI/mail request was not written to `data/companies.json`
 - [ ] Temporary `data/companies.json` entry was removed after the in-progress or verified DB sync
+- [ ] The requester email was resolved from the matching `company_submissions` record
+- [ ] The in-progress notification was handled by the successful `in_progress` sync
+- [ ] The verified notification was handled by the successful `verified` sync
+- [ ] Re-running an unchanged status did not send a duplicate notification
+- [ ] Missing recipients or delivery failures were reported by the sync output
 - [ ] **Leadership:** main founder role uses `"Founder"` (not `"Co-founder"`); CEO/COO/CTO only when officially listed
 - [ ] **Leadership:** roles reflect current titles, not outdated press coverage
 - [ ] **Locations:** `officeCities` lists hiring hubs; HQ stays in `hq` only (not duplicated in cities unless it's also a major office)

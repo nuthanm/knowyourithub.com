@@ -157,7 +157,7 @@ try {
       LIMIT 300
     `;
 
-    if (subscribers.length > 0) {
+    {
       const transport = getTransport();
       if (transport) {
         const requesterSent = new Set();
@@ -184,8 +184,8 @@ try {
                 text,
                 html: `<p><strong>${company.companyName}</strong> moved to <strong>Verified</strong>.</p><p>A company request completed review and is now verified in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
-            } catch {
-              // Keep sync successful if individual email delivery fails.
+            } catch (error) {
+              console.error(`Failed to send verified subscriber notification to ${to}:`, error instanceof Error ? error.message : error);
             }
           }
 
@@ -209,8 +209,8 @@ try {
                 ].join("\n"),
                 html: `<p>Hi ${requesterName},</p><p>Great news: your request for <strong>${company.companyName}</strong> is now <strong>Verified</strong> in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
-            } catch {
-              // Keep sync successful if requester notification fails.
+            } catch (error) {
+              console.error(`Failed to send verified requester notification to ${requesterEmail}:`, error instanceof Error ? error.message : error);
             }
           }
         }
@@ -226,7 +226,7 @@ try {
       LIMIT 300
     `;
 
-    if (subscribers.length > 0) {
+    {
       const transport = getTransport();
       if (transport) {
         const requesterSent = new Set();
@@ -253,8 +253,8 @@ try {
                 text,
                 html: `<p><strong>${company.companyName}</strong> moved to <strong>In Progress</strong>.</p><p>A company request is now under review in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
-            } catch {
-              // Keep sync successful if individual email delivery fails.
+            } catch (error) {
+              console.error(`Failed to send in-progress subscriber notification to ${to}:`, error instanceof Error ? error.message : error);
             }
           }
 
@@ -278,8 +278,8 @@ try {
                 ].join("\n"),
                 html: `<p>Hi ${requesterName},</p><p>Great news: your request for <strong>${company.companyName}</strong> is now <strong>In Progress</strong> in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
-            } catch {
-              // Keep sync successful if requester notification fails.
+            } catch (error) {
+              console.error(`Failed to send in-progress requester notification to ${requesterEmail}:`, error instanceof Error ? error.message : error);
             }
           }
         }
