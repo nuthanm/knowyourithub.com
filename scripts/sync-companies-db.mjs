@@ -26,6 +26,16 @@ function maskDbUrl(url) {
 
 const companiesJsonPath = resolve(process.cwd(), "data", "companies.json");
 
+function resolveProfileSlug(companyName, companySlug) {
+  const fallbackSlug = String(companyName || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return String(companySlug || fallbackSlug || "").trim();
+}
+
 console.log(`Using configured PostgreSQL connection: ${maskDbUrl(dbUrl)}`);
 console.log("Processing temporary researched-profile input from data/companies.json");
 
@@ -202,7 +212,8 @@ try {
       if (transport) {
         const requesterSent = new Set();
         for (const company of newlyVerified) {
-          const profilePath = company.companySlug ? `/companies/${company.companySlug}` : "/coming-soon";
+          const profileSlug = resolveProfileSlug(company.companyName, company.companySlug);
+          const profilePath = profileSlug ? `/companies/${profileSlug}` : "/coming-soon";
           const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
           const subject = `[Know Your IT Hub] ${company.companyName} status update: Verified`;
           const text = [
@@ -286,7 +297,8 @@ try {
       if (transport) {
         const requesterSent = new Set();
         for (const company of newlyInProgress) {
-          const profilePath = company.companySlug ? `/companies/${company.companySlug}` : "/coming-soon";
+          const profileSlug = resolveProfileSlug(company.companyName, company.companySlug);
+          const profilePath = profileSlug ? `/companies/${profileSlug}` : "/coming-soon";
           const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
           const subject = `[Know Your IT Hub] ${company.companyName} status update: In Progress`;
           const text = [

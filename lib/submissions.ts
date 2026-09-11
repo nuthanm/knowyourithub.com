@@ -224,6 +224,9 @@ async function notifyRequesterOfRejectedSubmission(params: {
 export async function saveSubmission(input: SubmissionInput & { id: string }) {
   const db = getSql();
   if (!db) return { stored: false as const };
+
+  const resolvedSlug = (input.companySlug?.trim() || slugifyCompanyName(input.companyName)).trim() || null;
+
   await db`
     INSERT INTO company_submissions (
       id, request_type, company_name, company_slug, website,
@@ -232,7 +235,7 @@ export async function saveSubmission(input: SubmissionInput & { id: string }) {
       ${input.id},
       ${input.requestType},
       ${input.companyName},
-      ${input.companySlug || null},
+      ${resolvedSlug},
       ${input.website || null},
       ${input.submitterName},
       ${input.submitterEmail},
