@@ -12,6 +12,37 @@ function cleanValue(value) {
   return trimmed;
 }
 
+function isPlaceholderValue(value) {
+  if (!value) return true;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized === "" ||
+    normalized.includes("replace") ||
+    normalized.includes("example.com") ||
+    normalized.includes("your@gmail.com") ||
+    normalized.includes("user:password") ||
+    normalized.includes("localhost") && normalized.includes("127.0.0.1")
+  );
+}
+
+function shouldUseFileValue(key, currentValue, fileValue) {
+  if (currentValue === undefined) return true;
+  if (!currentValue.trim()) return true;
+  if (isPlaceholderValue(currentValue)) return true;
+
+  if (key === "DATABASE_URL") {
+    const currentIsLocal = currentValue.includes("localhost") || currentValue.includes("127.0.0.1");
+    const fileIsLocal = fileValue.includes("localhost") || fileValue.includes("127.0.0.1");
+    if (currentIsLocal && !fileIsLocal) return true;
+  }
+
+  if (key === "SMTP_HOST" && fileValue && !fileValue.includes("example.com") && currentValue.includes("example.com")) {
+    return true;
+  }
+
+  return false;
+}
+
 function parseEnvLine(line) {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith("#")) return null;
@@ -46,7 +77,8 @@ export async function loadScriptEnv() {
       for (const line of lines) {
         const parsed = parseEnvLine(line);
         if (!parsed) continue;
-        if (process.env[parsed.key] === undefined) {
+        const currentValue = process.env[parsed.key];
+        if (shouldUseFileValue(parsed.key, currentValue ?? "", parsed.value)) {
           process.env[parsed.key] = parsed.value;
         }
       }

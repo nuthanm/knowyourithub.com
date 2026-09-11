@@ -12,6 +12,7 @@
     "companies:sync-db": "node scripts/sync-companies-db.mjs",
     "sync:workflow": "npm run submissions:migrate-verified && npm run companies:sync-db && npm run public:sanitize-data",
     "public:sanitize-data": "node scripts/sanitize-public-data.mjs",
+    "mail:test": "node scripts/send-test-email.mjs",
     "start": "next start",
     "lint": "eslint ."
   },

@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import nodemailer from "nodemailer";
 import postgres from "postgres";
@@ -12,28 +12,59 @@ if (!dbUrl || dbUrl.includes("replace") || dbUrl.includes("user:password")) {
   process.exit(0);
 }
 
+function maskDbUrl(url) {
+  if (!url) return "<missing>";
+  try {
+    const parsed = new URL(url);
+    const user = parsed.username ? "***" : "";
+    const password = parsed.password ? ":***" : "";
+    return `${parsed.protocol}//${user}${password}@${parsed.hostname}${parsed.port ? `:${parsed.port}` : ""}${parsed.pathname}`;
+  } catch {
+    return "postgresql://***:***@host/db";
+  }
+}
+
 const companiesJsonPath = resolve(process.cwd(), "data", "companies.json");
 
-console.log("Using data/companies.json as temporary researched-profile input");
+console.log(`Using configured PostgreSQL connection: ${maskDbUrl(dbUrl)}`);
+console.log("Processing temporary researched-profile input from data/companies.json");
+
+async function clearCompanyDrafts() {
+  await writeFile(companiesJsonPath, JSON.stringify({ companies: [] }, null, 2) + "\n", "utf8");
+}
 
 function normalizeStatus(value) {
   if (value === "verified" || value === "in_progress" || value === "unverified") return value;
   return "unverified";
 }
 
+function normalizeSecret(value) {
+  return String(value ?? "").trim().replace(/\s+/g, "");
+}
+
 function isMailerConfigured() {
-  const host = process.env.SMTP_HOST?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  return Boolean(host && user && pass && !host.includes("replace") && !user.includes("your@gmail.com") && !pass.includes("replace"));
+  const host = normalizeSecret(process.env.SMTP_HOST);
+  const user = normalizeSecret(process.env.SMTP_USER);
+  const pass = normalizeSecret(process.env.SMTP_PASS);
+  const configured = Boolean(host && user && pass && !host.includes("replace") && !user.includes("your@gmail.com") && !pass.includes("replace"));
+  console.log(
+    configured
+      ? `SMTP mailer configured for host=${host} user=${user}`
+      : "SMTP mailer not configured; email notifications will be skipped."
+  );
+  return configured;
 }
 
 function getTransport() {
-  const host = process.env.SMTP_HOST?.trim();
+  const host = normalizeSecret(process.env.SMTP_HOST);
   const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  if (!host || !user || !pass) return null;
+  const user = normalizeSecret(process.env.SMTP_USER);
+  const pass = normalizeSecret(process.env.SMTP_PASS);
+  if (!host || !user || !pass) {
+    console.warn("SMTP transport skipped because host/user/password are missing.");
+    return null;
+  }
+  console.log(`Creating SMTP transport for ${host}:${port} as ${user}`);
   return nodemailer.createTransport({
     host,
     port,
@@ -150,12 +181,21 @@ try {
   });
 
   if (newlyVerified.length > 0 && isMailerConfigured()) {
-    const subscribers = await sql<Array<{ email: string }>>`
-      SELECT email
-      FROM catalog_subscribers
-      ORDER BY created_at DESC
-      LIMIT 300
-    `;
+    let subscribers = [];
+    try {
+      subscribers = await sql`
+        SELECT email
+        FROM catalog_subscribers
+        ORDER BY created_at DESC
+        LIMIT 300
+      `;
+    } catch (error) {
+      console.warn("Subscriber table unavailable for verified-email broadcast.", error instanceof Error ? error.message : error);
+    }
+
+    if (subscribers.length === 0) {
+      console.log("No subscriber emails found; verified notification was skipped.");
+    }
 
     {
       const transport = getTransport();
@@ -176,14 +216,17 @@ try {
           for (const subscriber of subscribers) {
             const to = String(subscriber.email || "").trim();
             if (!to) continue;
+            console.log(`Sending verified subscriber email to ${to} for ${company.companyName}`);
+            const fromAddress = (process.env.MAIL_FROM || "").trim() || `"Know Your IT Hub" <${process.env.SMTP_USER}>`;
             try {
               await transport.sendMail({
-                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                from: fromAddress,
                 to,
                 subject,
                 text,
                 html: `<p><strong>${company.companyName}</strong> moved to <strong>Verified</strong>.</p><p>A company request completed review and is now verified in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
+              console.log(`Verified subscriber email sent to ${to}`);
             } catch (error) {
               console.error(`Failed to send verified subscriber notification to ${to}:`, error instanceof Error ? error.message : error);
             }
@@ -194,9 +237,11 @@ try {
           const requesterDedupKey = `${requesterEmail}|${company.companySlug || company.companyName}`;
           if (isValidEmail(requesterEmail) && !requesterSent.has(requesterDedupKey)) {
             requesterSent.add(requesterDedupKey);
+            console.log(`Sending verified requester email to ${requesterEmail} for ${company.companyName}`);
+            const fromAddress = (process.env.MAIL_FROM || "").trim() || `"Know Your IT Hub" <${process.env.SMTP_USER}>`;
             try {
               await transport.sendMail({
-                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                from: fromAddress,
                 to: requesterEmail,
                 subject: `[Know Your IT Hub] Your request for ${company.companyName} is now Verified`,
                 text: [
@@ -209,6 +254,7 @@ try {
                 ].join("\n"),
                 html: `<p>Hi ${requesterName},</p><p>Great news: your request for <strong>${company.companyName}</strong> is now <strong>Verified</strong> in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
+              console.log(`Verified requester email sent to ${requesterEmail}`);
             } catch (error) {
               console.error(`Failed to send verified requester notification to ${requesterEmail}:`, error instanceof Error ? error.message : error);
             }
@@ -219,12 +265,21 @@ try {
   }
 
   if (newlyInProgress.length > 0 && isMailerConfigured()) {
-    const subscribers = await sql`
-      SELECT email
-      FROM catalog_subscribers
-      ORDER BY created_at DESC
-      LIMIT 300
-    `;
+    let subscribers = [];
+    try {
+      subscribers = await sql`
+        SELECT email
+        FROM catalog_subscribers
+        ORDER BY created_at DESC
+        LIMIT 300
+      `;
+    } catch (error) {
+      console.warn("Subscriber table unavailable for in-progress email update.", error instanceof Error ? error.message : error);
+    }
+
+    if (subscribers.length === 0) {
+      console.log("No subscriber emails found; in-progress notification was skipped.");
+    }
 
     {
       const transport = getTransport();
@@ -245,14 +300,17 @@ try {
           for (const subscriber of subscribers) {
             const to = String(subscriber.email || "").trim();
             if (!to) continue;
+            console.log(`Sending in-progress subscriber email to ${to} for ${company.companyName}`);
+            const fromAddress = (process.env.MAIL_FROM || "").trim() || `"Know Your IT Hub" <${process.env.SMTP_USER}>`;
             try {
               await transport.sendMail({
-                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                from: fromAddress,
                 to,
                 subject,
                 text,
                 html: `<p><strong>${company.companyName}</strong> moved to <strong>In Progress</strong>.</p><p>A company request is now under review in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
+              console.log(`In-progress subscriber email sent to ${to}`);
             } catch (error) {
               console.error(`Failed to send in-progress subscriber notification to ${to}:`, error instanceof Error ? error.message : error);
             }
@@ -263,9 +321,11 @@ try {
           const requesterDedupKey = `${requesterEmail}|${company.companySlug || company.companyName}`;
           if (isValidEmail(requesterEmail) && !requesterSent.has(requesterDedupKey)) {
             requesterSent.add(requesterDedupKey);
+            console.log(`Sending in-progress requester email to ${requesterEmail} for ${company.companyName}`);
+            const fromAddress = (process.env.MAIL_FROM || "").trim() || `"Know Your IT Hub" <${process.env.SMTP_USER}>`;
             try {
               await transport.sendMail({
-                from: process.env.MAIL_FROM || process.env.SMTP_USER,
+                from: fromAddress,
                 to: requesterEmail,
                 subject: `[Know Your IT Hub] Your request for ${company.companyName} is now In Progress`,
                 text: [
@@ -278,6 +338,7 @@ try {
                 ].join("\n"),
                 html: `<p>Hi ${requesterName},</p><p>Great news: your request for <strong>${company.companyName}</strong> is now <strong>In Progress</strong> in the catalog.</p><p><a href="${site}/coming-soon">Open review queue</a></p><p><a href="${site}${profilePath}">View profile</a></p>`,
               });
+              console.log(`In-progress requester email sent to ${requesterEmail}`);
             } catch (error) {
               console.error(`Failed to send in-progress requester notification to ${requesterEmail}:`, error instanceof Error ? error.message : error);
             }
@@ -290,6 +351,8 @@ try {
   console.log(`Synced ${companies.length} companies to company_profiles.`);
   console.log(`Updated ${newlyVerified.length} submissions to verified.`);
   console.log(`Updated ${newlyInProgress.length} submissions to in_progress.`);
+  await clearCompanyDrafts();
+  console.log("Cleared temporary data/companies.json entries after a successful sync.");
 } finally {
   await sql.end({ timeout: 5 });
 }
