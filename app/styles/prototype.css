@@ -289,3 +289,22 @@
   color: var(--profit);
   text-decoration: none;
 }
+
+.proto-status-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  padding: 0.65rem 1.35rem;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.proto-status-banner a {
+  color: color-mix(in srgb, var(--white) 88%, transparent);
+  font-weight: 700;
+  text-decoration: none;
+}

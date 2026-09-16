@@ -10,14 +10,18 @@ type Props = { params: Promise<{ slug: string }> };
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
-  const company = await getCatalogCompanyBySlug(slug);
-  const entry = getCompanyEntryBySlug(slug);
-  if (!entry && !company) return { title: "Company not found — Know Your IT Hub" };
-  return {
-    title: `${company?.name ?? entry?.name} — Know Your IT Hub`,
-    description: company?.tagline ?? entry?.note ?? `${company?.name ?? entry?.name} on Know Your IT Hub`,
-  };
+  try {
+    const { slug } = await params;
+    const company = await getCatalogCompanyBySlug(slug);
+    const entry = getCompanyEntryBySlug(slug);
+    if (!entry && !company) return { title: "Company not found — Know Your IT Hub" };
+    return {
+      title: `${company?.name ?? entry?.name} — Know Your IT Hub`,
+      description: company?.tagline ?? entry?.note ?? `${company?.name ?? entry?.name} on Know Your IT Hub`,
+    };
+  } catch {
+    return { title: "We are working on this — Know Your IT Hub" };
+  }
 }
 
 export default async function CompanyPage({ params }: Props) {
