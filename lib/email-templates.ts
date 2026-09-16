@@ -6,37 +6,127 @@ import { createQueueAcceptToken, createQueueModerationToken } from "./security/q
 import { EMAIL_FOOTER, getApiPublicUrl, getCatalogUrl, getSiteUrl, SITE_NAME } from "./site-meta";
 import type { ContactInput, FeedbackInput, SubmissionInput } from "./validators";
 
-function emailShell(title: string, bodyHtml: string) {
+type EmailStep = "received" | "review" | "verified";
+
+type EmailShellOptions = {
+  kicker?: string;
+  preheader?: string;
+  showOptOut?: boolean;
+};
+
+function emailButton(href: string, label: string) {
+  return `
+    <a href="${escapeHtml(href)}" style="display:inline-block;background:#0a66c2;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;font-size:13px;line-height:1.2">
+      ${escapeHtml(label)}
+    </a>
+  `;
+}
+
+function emailSteps(current: EmailStep) {
+  const steps: Array<{ id: EmailStep; label: string }> = [
+    { id: "received", label: "Received" },
+    { id: "review", label: "In review" },
+    { id: "verified", label: "Verified" },
+  ];
+
+  return `
+    <p style="margin:16px 0 18px">
+      ${steps
+        .map((step) => {
+          const active = step.id === current;
+          const style = active
+            ? "display:inline-block;padding:5px 11px;border-radius:999px;background:#0a66c2;color:#ffffff;font-size:12px;font-weight:700;margin:0 6px 6px 0;border:1px solid #0a66c2"
+            : "display:inline-block;padding:5px 11px;border-radius:999px;background:#ffffff;color:#64748b;font-size:12px;font-weight:700;margin:0 6px 6px 0;border:1px solid #dbe5f3";
+          return `<span style="${style}">${escapeHtml(step.label)}</span>`;
+        })
+        .join("")}
+    </p>
+  `;
+}
+
+function emailKv(rows: Array<[string, string]>) {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px">
+      ${rows
+        .map(
+          ([label, value]) => `
+        <tr>
+          <td style="padding:7px 12px 7px 0;width:30%;color:#64748b;font-size:12px;font-weight:700;vertical-align:top">${escapeHtml(label)}</td>
+          <td style="padding:7px 0;font-size:14px;color:#141414;vertical-align:top">${escapeHtml(value)}</td>
+        </tr>
+      `,
+        )
+        .join("")}
+    </table>
+  `;
+}
+
+function emailQuote(text: string) {
+  return `<p style="margin:0 0 16px;background:#f7f5f0;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.5;color:#4a4a4a;white-space:pre-wrap;font-family:inherit">${escapeHtml(text)}</p>`;
+}
+
+function emailProfileCard(name: string, detail: string) {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #e8e4dc;border-radius:12px;background:#ffffff;margin:0 0 16px">
+      <tr>
+        <td style="padding:14px 16px">
+          <div style="font-size:16px;font-weight:700;color:#0c1929">${escapeHtml(name)}</div>
+          <p style="margin:6px 0 0;font-size:14px;line-height:1.45;color:#4a4a4a">${escapeHtml(detail)}</p>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function emailShell(title: string, bodyHtml: string, options: EmailShellOptions = {}) {
   const site = escapeHtml(getSiteUrl());
   const brand = escapeHtml(SITE_NAME);
+  const kicker = escapeHtml(options.kicker ?? `Verified catalog · ${DATA_YEAR}`);
+  const preheader = options.preheader
+    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(options.preheader)}</div>`
+    : "";
+  const optOut = options.showOptOut
+    ? `<p style="font-size:12px;color:#64748b;margin:0 0 8px">You received this because you opted in to catalog update emails. Use <a href="${site}/contact" style="color:#0a66c2;text-decoration:none">Contact</a> to stop these emails.</p>`
+    : "";
+
   return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f7fb;padding:24px 12px;font-family:Segoe UI,Arial,sans-serif;color:#111827">
+    ${preheader}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eef2f7;padding:24px 12px;font-family:Segoe UI,Arial,sans-serif;color:#141414">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;border:1px solid #dbe5f3;border-radius:14px;overflow:hidden;background:#ffffff">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border:1px solid #dbe5f3;border-radius:14px;overflow:hidden;background:#ffffff">
             <tr>
-              <td style="padding:18px 22px;background:linear-gradient(120deg, rgba(10,102,194,0.12) 0%, rgba(10,102,194,0.04) 100%);border-bottom:1px solid #dbe5f3">
-                <div style="font-size:20px;font-weight:700;letter-spacing:0.1px;color:#0f172a">${brand}</div>
-                <div style="font-size:12px;color:#475569;margin-top:4px">Verified catalog · ${DATA_YEAR}</div>
+              <td style="padding:16px 20px;background:#0c1929">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td width="28" height="28" align="center" valign="middle" style="width:28px;height:28px;background:#ffffff;border-radius:6px;font-family:Georgia,Times New Roman,serif;font-size:14px;font-weight:700;color:#0c1929">K</td>
+                    <td width="12"></td>
+                    <td>
+                      <div style="font-size:16px;font-weight:700;color:#ffffff;font-family:Georgia,Times New Roman,serif">${brand}</div>
+                      <div style="font-size:12px;color:#b7c3d1;margin-top:2px">${kicker}</div>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
               <td style="padding:24px 22px 8px">
-                <h2 style="font-size:22px;line-height:1.25;margin:0 0 14px;color:#111827">${escapeHtml(title)}</h2>
+                <h1 style="font-size:22px;line-height:1.25;margin:0 0 14px;color:#0c1929;font-family:Georgia,Times New Roman,serif;font-weight:700">${escapeHtml(title)}</h1>
                 ${bodyHtml}
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 22px 24px">
+              <td style="padding:8px 22px 24px">
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 14px" />
                 <p style="font-size:12px;color:#64748b;margin:0 0 8px">${escapeHtml(EMAIL_FOOTER.disclaimer)}</p>
                 <p style="font-size:12px;color:#64748b;margin:0 0 8px">${escapeHtml(EMAIL_FOOTER.reportLine)}</p>
+                ${optOut}
                 <p style="font-size:12px;margin:0 0 10px">
                   <a href="${site}/submit" style="color:#0a66c2;text-decoration:none">Submit a correction</a>
                   ·
                   <a href="${site}/contact" style="color:#0a66c2;text-decoration:none">Contact</a>
                   ·
-                  <a href="${site}/feedback" style="color:#0a66c2;text-decoration:none">Share feedback</a>
+                  <a href="${site}/feedback" style="color:#0a66c2;text-decoration:none">Feedback</a>
                 </p>
                 <p style="font-size:11px;color:#94a3b8;margin:0">Source domain: ${site.replace("http://", "").replace("https://", "")}</p>
                 <p style="font-size:12px;color:#64748b;margin:10px 0 0">${escapeHtml(EMAIL_FOOTER.signOff)}</p>
@@ -49,11 +139,16 @@ function emailShell(title: string, bodyHtml: string) {
   `;
 }
 
-function textFooter() {
+function textFooter(showOptOut = false) {
   return [
     "",
     EMAIL_FOOTER.disclaimer,
     EMAIL_FOOTER.reportLine,
+    ...(showOptOut
+      ? [
+          "You received this because you opted in to catalog update emails. Use Contact on the site to stop these emails.",
+        ]
+      : []),
     `${getSiteUrl()}/submit`,
     "",
     EMAIL_FOOTER.signOff,
@@ -115,6 +210,12 @@ function queueStageCta(stage: "awaiting_review" | "in_progress" | "verified") {
   };
 }
 
+function queueStep(stage: "awaiting_review" | "in_progress" | "verified"): EmailStep {
+  if (stage === "verified") return "verified";
+  if (stage === "in_progress") return "review";
+  return "review";
+}
+
 export function buildAdminEmail(input: SubmissionInput & { id: string }) {
   const site = getSiteUrl();
   const catalog = getCatalogUrl();
@@ -144,31 +245,29 @@ export function buildAdminEmail(input: SubmissionInput & { id: string }) {
   ].filter(Boolean);
 
   const html = emailShell(
-    `New company ${input.requestType} request`,
+    `New ${input.requestType} request`,
     `
-      <p>A visitor submitted a correction for the <strong>${DATA_YEAR}</strong> catalog. Verify on the <strong>official company website</strong> before publishing.</p>
-      <p><strong>ID:</strong> ${escapeHtml(input.id)}</p>
-      <p><strong>Company:</strong> ${escapeHtml(input.companyName)}</p>
-      ${input.companySlug ? `<p><strong>Slug:</strong> ${escapeHtml(input.companySlug)}</p>` : ""}
-      ${input.website ? `<p><strong>Website:</strong> ${escapeHtml(input.website)}</p>` : ""}
-      <p><strong>Submitter:</strong> ${escapeHtml(input.submitterName)} (${escapeHtml(input.submitterEmail)})</p>
-      ${input.subscribeToUpdates ? "<p><strong>Update alerts:</strong> Yes — add to subscriber list after review.</p>" : ""}
-      <pre style="white-space:pre-wrap;font-family:inherit;background:#f7f5f0;padding:12px;border-radius:8px">${escapeHtml(input.message)}</pre>
-      <p style="margin:20px 0 8px">
-        <a href="${escapeHtml(addToQueueUrl)}" style="display:inline-block;background:#0a66c2;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600">
-          Add ${escapeHtml(input.companyName)} to review queue
-        </a>
-      </p>
-      <p style="margin:0 0 10px">
-        <a href="${escapeHtml(moderationUrl)}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:8px;font-weight:600">
-          Open moderation console (no login)
-        </a>
-      </p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#4a4a4a">A visitor submitted a request for the ${DATA_YEAR} catalog. Verify on the official company website before publishing.</p>
+      ${emailKv(
+        [
+          ["Company", input.companyName],
+          ["Type", input.requestType === "add" ? "Add" : "Edit"],
+          input.website ? ["Website", input.website] : null,
+          ["From", `${input.submitterName} (${input.submitterEmail})`],
+          ["Reference", input.id],
+        ].filter(Boolean) as Array<[string, string]>,
+      )}
+      ${emailQuote(input.message)}
+      <p style="margin:0 0 10px">${emailButton(addToQueueUrl, `Add ${input.companyName} to review queue`)}</p>
       <p style="font-size:12px;color:#737373;margin:0">
         Opens the review queue and lists this company as pending.
-        <a href="${escapeHtml(catalog)}/coming-soon/" style="color:#0a66c2">View queue</a>
+        <a href="${escapeHtml(moderationUrl)}" style="color:#0a66c2">Open moderation console</a>
       </p>
     `,
+    {
+      kicker: "Maintainer action needed",
+      preheader: `${input.requestType === "add" ? "Add" : "Edit"} request for ${input.companyName}`,
+    },
   );
 
   return { subject, text: lines.join("\n"), html };
@@ -188,25 +287,29 @@ export function buildUserConfirmationEmail(input: SubmissionInput & { id: string
     `We received your request to ${input.requestType === "add" ? "add" : "update"} ${input.companyName}.`,
     `Reference: ${input.id}`,
     "",
-    "Our team manually checks every field against official pages before a profile gets the Verified stamp.",
-    input.requestType === "add"
-      ? `Track progress on the review queue: ${getSiteUrl()}/coming-soon`
-      : "",
+    "Status: Received → In review → Verified",
+    "A person will check official pages before this company can receive the Verified stamp.",
+    input.requestType === "add" ? `Track progress on the review queue: ${site}/coming-soon` : "",
     updateLine,
     textFooter(),
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const html = emailShell(
-    "Request received — thank you",
+    "Request received",
     `
-      <p>Hi ${escapeHtml(input.submitterName)},</p>
-      <p>Thank you for helping keep <strong>${escapeHtml(SITE_NAME)}</strong> accurate for everyone.</p>
-      <p>We received your request to <strong>${input.requestType === "add" ? "add" : "update"} ${escapeHtml(input.companyName)}</strong> on the ${DATA_YEAR} catalog.</p>
-      <p>Reference: <code>${escapeHtml(input.id)}</code></p>
-      <p>We manually validate content on official company pages before awarding the <strong>Verified</strong> stamp.</p>
-      ${input.requestType === "add" ? `<p>Track progress on the <a href="${site}/coming-soon" style="color:#0a66c2">review queue</a> while we research your request.</p>` : ""}
-      ${input.subscribeToUpdates ? "<p>You opted in to catalog update emails — we will notify you when new verified companies are published.</p>" : ""}
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Hi ${escapeHtml(input.submitterName)},</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">We received your request to <strong>${input.requestType === "add" ? "add" : "update"} ${escapeHtml(input.companyName)}</strong>.</p>
+      <p style="margin:0 0 4px;font-size:14px;color:#4a4a4a">Reference <code style="font-family:inherit">${escapeHtml(input.id)}</code></p>
+      ${emailSteps("received")}
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.55;color:#4a4a4a">A person will check official pages before this company can receive the Verified stamp.</p>
+      ${input.requestType === "add" ? `<p style="margin:0 0 10px">${emailButton(`${site}/coming-soon`, "Track in review queue")}</p>` : ""}
+      ${input.subscribeToUpdates ? "<p style=\"margin:12px 0 0;font-size:13px;color:#64748b\">You opted in to catalog update emails — we will notify you when this request is verified.</p>" : ""}
     `,
+    {
+      preheader: `We received your request for ${input.companyName}. Reference ${input.id}.`,
+    },
   );
 
   return { subject, text, html };
@@ -233,22 +336,27 @@ export function buildSubmissionRejectedEmail(input: { companyName: string; submi
   const text = [
     `Hi ${input.submitterName},`,
     "",
-    `We completed our review of your request for ${input.companyName}.`,
+    `We completed our review of ${input.companyName}.`,
     "",
-    "We are unable to add this request to the catalog at this time. This can happen when we cannot verify the company details from official sources or when the request does not fit the catalog scope.",
+    "We could not add this company yet. This can happen when we cannot verify the details from official sources, or the request is outside catalog scope.",
     "",
-    `You can submit additional official-source details or a correction here: ${getSiteUrl()}/submit`,
+    `If you have an official About or careers URL, submit those details and we will review again: ${getSiteUrl()}/submit`,
     textFooter(),
   ].join("\n");
 
   const html = emailShell(
-    "Update on your request",
+    "We could not add this company yet",
     `
-      <p>Hi ${escapeHtml(input.submitterName)},</p>
-      <p>We completed our review of your request for <strong>${escapeHtml(input.companyName)}</strong>.</p>
-      <p>We are unable to add this request to the catalog at this time. This can happen when we cannot verify the company details from official sources or when the request does not fit the catalog scope.</p>
-      <p>You can submit additional official-source details or a correction through <a href="${getSiteUrl()}/submit" style="color:#0a66c2">Submit request</a>.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Hi ${escapeHtml(input.submitterName)},</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">We completed our review of <strong>${escapeHtml(input.companyName)}</strong>.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.55;color:#4a4a4a">We could not verify the details from official sources, or the request is outside catalog scope.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">If you have an official About or careers URL, submit those details and we will review again.</p>
+      <p style="margin:0">${emailButton(`${getSiteUrl()}/submit`, "Submit more sources")}</p>
     `,
+    {
+      kicker: "Update on your request",
+      preheader: `We could not add ${input.companyName} yet. You can submit official sources to review again.`,
+    },
   );
 
   return { subject, text, html };
@@ -263,17 +371,21 @@ export function buildSubscribeWelcomeEmail(input: { name: string; email: string 
     "We will email you when we add or verify new companies — with details of what changed.",
     "",
     "Every listed company is manually checked on official pages before it receives our Verified stamp.",
-    textFooter(),
+    textFooter(true),
   ].join("\n");
 
   const html = emailShell(
     "You're subscribed to catalog updates",
     `
-      <p>Hi ${escapeHtml(input.name)},</p>
-      <p>Thanks for subscribing to <strong>${escapeHtml(SITE_NAME)}</strong> update alerts.</p>
-      <p>We will email you when we add or verify companies on the ${DATA_YEAR} catalog — including what was added or updated.</p>
-      <p>Only profiles that pass manual review on official sources receive our <strong>Verified</strong> stamp.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Hi ${escapeHtml(input.name)},</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Thanks for subscribing to <strong>${escapeHtml(SITE_NAME)}</strong> update alerts.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">We will email you when we add or verify companies on the ${DATA_YEAR} catalog — including what was added or updated.</p>
+      <p style="margin:0;font-size:14px;line-height:1.55;color:#4a4a4a">Only profiles that pass manual review on official sources receive our <strong>Verified</strong> stamp.</p>
     `,
+    {
+      preheader: `You're on the ${SITE_NAME} catalog update list for ${DATA_YEAR}.`,
+      showOptOut: true,
+    },
   );
 
   return { subject, text, html };
@@ -290,6 +402,8 @@ export function buildQueueStageBroadcastEmail(input: {
   const info = queueStageCta(input.stage);
   const profilePath = input.companySlug ? `/companies/${input.companySlug}` : "/coming-soon";
   const profileUrl = `${site}${profilePath}`;
+  const ctaHref = input.stage === "verified" ? profileUrl : `${site}/coming-soon`;
+  const isBroadcast = input.stage === "verified";
 
   const subject = `[${SITE_NAME}] ${input.companyName} status update: ${stage}`;
   const text = [
@@ -300,23 +414,30 @@ export function buildQueueStageBroadcastEmail(input: {
     "",
     message,
     "",
-    input.stage === "verified"
-      ? `${info.cta}: ${profileUrl}`
-      : `${info.cta}: ${site}/coming-soon`,
-    textFooter(),
-  ].filter(Boolean).join("\n");
+    `${info.cta}: ${ctaHref}`,
+    textFooter(isBroadcast),
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const html = emailShell(
-    `${escapeHtml(input.companyName)} status update`,
+    input.stage === "verified" ? `${input.companyName} is now verified` : `${input.companyName} status update`,
     `
-      <p><strong>${escapeHtml(input.companyName)}</strong> moved to <strong>${escapeHtml(stage)}</strong>.</p>
-      <p><strong>${escapeHtml(info.heading)}</strong></p>
-      <p>${escapeHtml(info.detail)}</p>
-      <p>${escapeHtml(message)}</p>
-      ${input.stage === "verified"
-        ? `<p><a href="${escapeHtml(profileUrl)}" style="color:#0a66c2">${escapeHtml(info.cta)}</a></p>`
-        : `<p><a href="${site}/coming-soon" style="color:#0a66c2">${escapeHtml(info.cta)}</a></p>`}
+      ${emailSteps(queueStep(input.stage))}
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a"><strong>${escapeHtml(info.heading)}</strong></p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#4a4a4a">${escapeHtml(info.detail)}</p>
+      ${
+        input.stage === "verified"
+          ? emailProfileCard(input.companyName, "Now live in the catalog with source-linked details.")
+          : `<p style="margin:0 0 16px;font-size:14px;line-height:1.55;color:#4a4a4a">${escapeHtml(message)}</p>`
+      }
+      <p style="margin:0">${emailButton(ctaHref, info.cta)}</p>
     `,
+    {
+      kicker: input.stage === "verified" ? "Catalog update" : `Verified catalog · ${DATA_YEAR}`,
+      preheader: `${input.companyName} moved to ${stage}.`,
+      showOptOut: isBroadcast,
+    },
   );
 
   return { subject, text, html };
@@ -330,16 +451,24 @@ export function buildFeedbackAdminEmail(input: FeedbackInput & { id: string }) {
     `Helped career decision: ${helpedLabel(input.helped)}`,
     input.message ? `Message: ${input.message}` : "",
     textFooter(),
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const html = emailShell(
     "New site feedback",
     `
-      <p><strong>ID:</strong> ${escapeHtml(input.id)}</p>
-      <p><strong>From:</strong> ${escapeHtml(input.name)} (${escapeHtml(input.email)})</p>
-      <p><strong>Helped pick the right company:</strong> ${escapeHtml(helpedLabel(input.helped))}</p>
-      ${input.message ? `<pre style="white-space:pre-wrap;font-family:inherit;background:#f7f5f0;padding:12px;border-radius:8px">${escapeHtml(input.message)}</pre>` : ""}
+      ${emailKv([
+        ["From", `${input.name} (${input.email})`],
+        ["Helped", helpedLabel(input.helped)],
+        ["Reference", input.id],
+      ])}
+      ${input.message ? emailQuote(input.message) : ""}
     `,
+    {
+      kicker: "Maintainer action needed",
+      preheader: `Feedback from ${input.name}: ${helpedLabel(input.helped)}`,
+    },
   );
 
   return { subject, text, html };
@@ -358,10 +487,13 @@ export function buildFeedbackUserEmail(input: FeedbackInput & { id: string }) {
   const html = emailShell(
     "Thank you for your feedback",
     `
-      <p>Hi ${escapeHtml(input.name)},</p>
-      <p>Thank you for telling us whether <strong>${escapeHtml(SITE_NAME)}</strong> helped you pick the right company.</p>
-      <p>We read every response. Report data issues anytime via Submit request.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Hi ${escapeHtml(input.name)},</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Thank you for telling us whether <strong>${escapeHtml(SITE_NAME)}</strong> helped you pick the right company.</p>
+      <p style="margin:0;font-size:14px;line-height:1.55;color:#4a4a4a">We read every response. Report data issues anytime via Submit request.</p>
     `,
+    {
+      preheader: "We received your feedback and read every response.",
+    },
   );
 
   return { subject, text, html };
@@ -382,11 +514,17 @@ export function buildContactAdminEmail(input: ContactInput & { id: string }) {
   const html = emailShell(
     "New contact message",
     `
-      <p><strong>ID:</strong> ${escapeHtml(input.id)}</p>
-      <p><strong>From:</strong> ${escapeHtml(input.name)} (${escapeHtml(input.email)})</p>
-      <p><strong>Topic:</strong> ${escapeHtml(contactTopicLabel(input.topic))}</p>
-      <pre style="white-space:pre-wrap;font-family:inherit;background:#f7f5f0;padding:12px;border-radius:8px">${escapeHtml(input.message)}</pre>
+      ${emailKv([
+        ["From", `${input.name} (${input.email})`],
+        ["Topic", contactTopicLabel(input.topic)],
+        ["Reference", input.id],
+      ])}
+      ${emailQuote(input.message)}
     `,
+    {
+      kicker: "Maintainer action needed",
+      preheader: `Contact from ${input.name}: ${contactTopicLabel(input.topic)}`,
+    },
   );
 
   return { subject, text, html };
@@ -409,12 +547,17 @@ export function buildContactUserEmail(input: ContactInput & { id: string }) {
   const html = emailShell(
     "We received your message",
     `
-      <p>Hi ${escapeHtml(input.name)},</p>
-      <p>Thank you for contacting <strong>${escapeHtml(SITE_NAME)}</strong>.</p>
-      <p><strong>Topic:</strong> ${escapeHtml(contactTopicLabel(input.topic))}</p>
-      <p><strong>Reference:</strong> ${escapeHtml(input.id)}</p>
-      <p>We read every message and will reply when a response is needed. For company corrections, use Submit request.</p>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.55;color:#4a4a4a">Hi ${escapeHtml(input.name)},</p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#4a4a4a">Thank you for contacting <strong>${escapeHtml(SITE_NAME)}</strong>.</p>
+      ${emailKv([
+        ["Topic", contactTopicLabel(input.topic)],
+        ["Reference", input.id],
+      ])}
+      <p style="margin:0;font-size:14px;line-height:1.55;color:#4a4a4a">We read every message and will reply when a response is needed. For company corrections, use Submit request.</p>
     `,
+    {
+      preheader: `We received your message. Reference ${input.id}.`,
+    },
   );
 
   return { subject, text, html };
