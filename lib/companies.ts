@@ -198,18 +198,27 @@ export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   unverified: "Awaiting review",
 };
 
+type PendingCompanyCatalog = {
+  dataYear?: string | number;
+  catalogUpdated?: string;
+  disclaimer?: string;
+  companies?: CompanyProfile[];
+};
+
 const currentYear = new Date().getUTCFullYear();
 const currentDate = new Date().toISOString().slice(0, 10);
+const catalog = pendingCatalog as PendingCompanyCatalog;
 
-export const DATA_YEAR = (pendingCatalog as any)?.dataYear ?? currentYear;
-export const CATALOG_UPDATED = (pendingCatalog as any)?.catalogUpdated ?? currentDate;
-export const CATALOG_DISCLAIMER = (pendingCatalog as any)?.disclaimer ?? "Company profiles are maintained and verified by Know Your IT Hub.";
+export const DATA_YEAR = catalog.dataYear ?? currentYear;
+export const CATALOG_UPDATED = catalog.catalogUpdated ?? currentDate;
+export const CATALOG_DISCLAIMER =
+  catalog.disclaimer ?? "Company profiles are maintained and verified by Know Your IT Hub.";
 
 const catalogCompanies: CompanyProfile[] = [];
 const catalogSlugs = new Set(catalogCompanies.map((company) => company.slug));
-const pendingCompanies = ((pendingCatalog as any)?.companies as CompanyProfile[])?.filter(
+const pendingCompanies = (catalog.companies ?? []).filter(
   (company) => !catalogSlugs.has(company.slug),
-) ?? [];
+);
 
 export const COMPANIES: CompanyProfile[] = [...catalogCompanies, ...pendingCompanies];
 
