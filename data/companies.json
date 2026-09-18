@@ -1,3 +1,58 @@
 {
-  "companies": []
+  "companies": [
+    {
+      "slug": "quick-heal-technologies",
+      "name": "Quick Heal Technologies",
+      "category": "product",
+      "tagline": "India's listed cybersecurity product company — Quick Heal for consumers and Seqrite for enterprises.",
+      "description": "Quick Heal Technologies Limited is a Pune-headquartered cybersecurity product company. Each Quick Heal product is designed to simplify IT security across devices and platforms for consumers, small businesses, government establishments, and corporate houses; Seqrite is its enterprise cybersecurity brand.",
+      "website": "https://www.quickheal.co.in",
+      "founded": "1995",
+      "hq": "Pune, India",
+      "officeCities": ["Pune", "Bengaluru", "Mumbai", "Hyderabad", "Chennai", "Delhi", "Nashik"],
+      "officeCountries": ["India", "United Arab Emirates", "United States"],
+      "totalOfficeLocations": "23 offices in India across 22 cities; 2 international offices (Dubai and USA)",
+      "locationsUrl": "https://www.quickheal.co.in/quick-heal-dealer",
+      "contactUrl": "https://www.quickheal.co.in/quick-heal-security-solutions",
+      "headcountGlobal": "1,000+",
+      "headcountNote": "Homepage states 1,000+ cybersecurity experts. Q4 FY26 earnings presentation (May 2026) cites ~1,000 cybersecurity professionals. FY 2024–25 annual report listed 973 permanent employees as of 31 March 2025. India-specific headcount is not separately disclosed.",
+      "domains": ["Cybersecurity", "Antivirus", "Enterprise security", "Consumer software"],
+      "tags": ["Public company", "Listed on BSE & NSE"],
+      "products": [
+        "Quick Heal Total Security",
+        "Quick Heal Internet Security",
+        "Quick Heal AntiVirus Pro",
+        "Quick Heal AntiFraud.AI",
+        "Seqrite Endpoint Protection",
+        "Seqrite Endpoint Detection and Response",
+        "Seqrite Extended Detection and Response",
+        "Seqrite Data Privacy",
+        "Seqrite Zero Trust Network Access",
+        "Seqrite Mobile Device Management"
+      ],
+      "careersUrl": "https://www.quickheal.co.in/jobs-careers-at-quick-heal",
+      "linkedin": "https://www.linkedin.com/company/quick-heal-technologies-pvt--ltd-",
+      "twitter": "https://twitter.com/quickheal",
+      "leadership": [
+        { "name": "Dr. Kailash Katkar", "role": "Founder & Chairman and Managing Director" },
+        { "name": "Dr. Sanjay Katkar", "role": "Co-founder & Joint Managing Director" },
+        { "name": "Harish Kumar G S", "role": "CEO" }
+      ],
+      "vision": "To be trusted by our customers in securing the digital world and aim to grow as reputable global market leader.",
+      "lastVerified": "2026-09-18",
+      "verificationStatus": "in_progress",
+      "sources": [
+        { "label": "About us", "url": "https://www.quickheal.co.in/quick-heal-security-solutions" },
+        { "label": "Official homepage", "url": "https://www.quickheal.co.in" },
+        { "label": "Investor relations", "url": "https://www.quickheal.co.in/investors" },
+        { "label": "Annual Report FY 2024-25", "url": "https://www.quickheal.co.in/documents/investors/quick-heal-annual-report-fy-2024-25.pdf" },
+        { "label": "Q4 FY26 earnings presentation", "url": "https://www.quickheal.co.in/media/investorrelations/presentation/earnings-presentation-quick-heal-q4-fy-26.pdf" },
+        { "label": "Careers", "url": "https://www.quickheal.co.in/jobs-careers-at-quick-heal" },
+        { "label": "Locate offices and dealers", "url": "https://www.quickheal.co.in/quick-heal-dealer" },
+        { "label": "Seqrite enterprise products", "url": "https://www.seqrite.com/" },
+        { "label": "AntiFraud.AI", "url": "https://www.quickheal.co.in/quick-heal-antifraud" },
+        { "label": "LinkedIn", "url": "https://www.linkedin.com/company/quick-heal-technologies-pvt--ltd-" }
+      ]
+    }
+  ]
 }
